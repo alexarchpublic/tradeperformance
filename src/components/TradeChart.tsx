@@ -56,18 +56,22 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   const handleBrushChange = (range: BrushRange) => {
-    if (!range?.startIndex || !range?.endIndex) {
-      setDateRange(null);
+    if (range?.startIndex === undefined || range?.endIndex === undefined) {
       return;
     }
 
-    const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
+    const startIndex = Math.max(0, Math.min(range.startIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(0, Math.min(range.endIndex, data.equityCurve.length - 1));
 
-    setDateRange({
-      start: startDate,
-      end: endDate
-    });
+    if (startIndex >= 0 && endIndex >= 0 && startIndex <= endIndex) {
+      const startDate = new Date(data.equityCurve[startIndex].date).getTime();
+      const endDate = new Date(data.equityCurve[endIndex].date).getTime();
+
+      setDateRange({
+        start: startDate,
+        end: endDate
+      });
+    }
   };
 
   const calculateDomains = () => {
@@ -225,6 +229,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   travellerWidth={8}
                   y={0}
                   alwaysShowText={true}
+                  data={data.equityCurve}
                 />
               </LineChart>
             </ResponsiveContainer>
