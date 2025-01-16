@@ -45,10 +45,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const getVisibleData = () => {
     if (!brushDomain || brushDomain.startIndex === undefined || brushDomain.endIndex === undefined) {
-      console.error('Using full data range:', { dataLength: data.equityCurve.length });
+      console.debug('Using full data range:', { dataLength: data.equityCurve.length });
       return data.equityCurve;
     }
-    console.error('Using brushed data range:', { 
+    console.debug('Using brushed data range:', { 
       start: brushDomain.startIndex, 
       end: brushDomain.endIndex,
       dataLength: data.equityCurve.length 
@@ -58,7 +58,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   // Find the corresponding equity curve index for the hovered trade
   const findEquityCurveIndex = (tradeIndex: number | null) => {
-    console.error('Finding equity curve index:', { 
+    console.debug('Finding equity curve index:', { 
       tradeIndex,
       visibleDataLength: visibleData.length,
       brushDomain,
@@ -128,24 +128,34 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
   const handleBrushChange = (domain: BrushIndex) => {
-    console.error('Brush change event:', { 
+    console.debug('Brush change event:', { 
       domain,
       dataLength: data.equityCurve.length
     });
 
-    // If domain is null or empty, reset to show all data
-    if (!domain?.startIndex || !domain?.endIndex) {
-      console.error('Resetting brush domain to null');
+    // Reset to show all data if brush is cleared
+    if (!domain) {
+      console.debug('Resetting brush domain to null');
       setBrushDomain(null);
       return;
     }
+
+    // Extract start and end indices from the domain object
+    const startIndex = typeof domain === 'object' ? domain.startIndex : undefined;
+    const endIndex = typeof domain === 'object' ? domain.endIndex : undefined;
+
+    // Validate indices
+    if (typeof startIndex !== 'number' || typeof endIndex !== 'number') {
+      console.error('Invalid brush domain indices:', { startIndex, endIndex });
+      return;
+    }
     
-    const boundedStart = Math.max(0, domain.startIndex);
-    const boundedEnd = Math.min(data.equityCurve.length, domain.endIndex);
+    const boundedStart = Math.max(0, startIndex);
+    const boundedEnd = Math.min(data.equityCurve.length, endIndex);
     
-    console.error('Setting new brush domain:', {
-      originalStart: domain.startIndex,
-      originalEnd: domain.endIndex,
+    console.debug('Setting new brush domain:', {
+      startIndex,
+      endIndex,
       boundedStart,
       boundedEnd
     });
@@ -170,7 +180,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   // Log component render state
-  console.error('TradeChart render state:', {
+  console.debug('TradeChart render state:', {
     hoveredTradeIndex,
     equityCurveIndex,
     visibleDataLength: visibleData.length,
