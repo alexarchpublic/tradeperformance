@@ -56,13 +56,17 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   const handleBrushChange = (timeRange: BrushStartEnd | null) => {
-    if (!timeRange || typeof timeRange.startIndex !== 'number' || typeof timeRange.endIndex !== 'number') {
+    if (!timeRange || timeRange.startIndex === undefined || timeRange.endIndex === undefined) {
       setDateRange(null);
       return;
     }
 
-    const startDate = new Date(data.equityCurve[timeRange.startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[timeRange.endIndex].date).getTime();
+    // Ensure indices are within bounds
+    const startIndex = Math.max(0, Math.min(timeRange.startIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(0, Math.min(timeRange.endIndex, data.equityCurve.length - 1));
+
+    const startDate = new Date(data.equityCurve[startIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[endIndex].date).getTime();
     
     setDateRange({
       start: startDate,
@@ -224,6 +228,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   fill="#1f2937"
                   travellerWidth={10}
                   alwaysShowText={true}
+                  data={data.equityCurve}
+                  x={0}
+                  y={0}
+                  gap={1}
                 />
               </LineChart>
             </ResponsiveContainer>
