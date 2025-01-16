@@ -47,14 +47,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       return data.equityCurve;
     }
 
-    return data.equityCurve.filter(point => {
+    const visibleData = data.equityCurve.filter(point => {
       const timestamp = new Date(point.date).getTime();
       return timestamp >= dateRange.start && timestamp <= dateRange.end;
     });
+
+    return visibleData.length > 0 ? visibleData : data.equityCurve;
   };
 
   const handleBrushChange = (timeRange: BrushStartEnd | null) => {
-    if (!timeRange?.startIndex || !timeRange?.endIndex) {
+    if (!timeRange || typeof timeRange.startIndex !== 'number' || typeof timeRange.endIndex !== 'number') {
       setDateRange(null);
       return;
     }
@@ -189,7 +191,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 />
                 {selectedMetrics.includes('equity') && (
                   <Line
-                    type="monotone"
+                    type="stepAfter"
                     dataKey="equity"
                     name="Account Value"
                     stroke={METRIC_COLORS.equity}
@@ -221,6 +223,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={10}
+                  alwaysShowText={true}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -254,7 +257,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     labelFormatter={(label) => format(new Date(label), "MMM d, yyyy HH:mm")}
                   />
                   <Line
-                    type="monotone"
+                    type="stepAfter"
                     dataKey="pnl"
                     name="P&L"
                     stroke={METRIC_COLORS.pnl}
