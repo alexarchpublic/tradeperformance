@@ -56,22 +56,25 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   const handleBrushChange = (range: BrushRange) => {
-    if (range?.startIndex === undefined || range?.endIndex === undefined) {
+    if (!range) {
+      setDateRange(null);
+      return;
+    }
+
+    if (range.startIndex === undefined || range.endIndex === undefined) {
       return;
     }
 
     const startIndex = Math.max(0, Math.min(range.startIndex, data.equityCurve.length - 1));
-    const endIndex = Math.max(0, Math.min(range.endIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(startIndex, Math.min(range.endIndex, data.equityCurve.length - 1));
 
-    if (startIndex >= 0 && endIndex >= 0 && startIndex <= endIndex) {
-      const startDate = new Date(data.equityCurve[startIndex].date).getTime();
-      const endDate = new Date(data.equityCurve[endIndex].date).getTime();
+    const startDate = new Date(data.equityCurve[startIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[endIndex].date).getTime();
 
-      setDateRange({
-        start: startDate,
-        end: endDate
-      });
-    }
+    setDateRange({
+      start: startDate,
+      end: endDate
+    });
   };
 
   const calculateDomains = () => {
@@ -227,9 +230,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={8}
-                  y={0}
+                  y={320}
+                  startIndex={0}
+                  endIndex={data.equityCurve.length - 1}
                   alwaysShowText={true}
-                  data={data.equityCurve}
                 />
               </LineChart>
             </ResponsiveContainer>
