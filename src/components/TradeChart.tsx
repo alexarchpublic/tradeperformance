@@ -27,6 +27,11 @@ type DateRange = {
   end: number;
 } | null;
 
+interface BrushStartEnd {
+  startIndex?: number;
+  endIndex?: number;
+}
+
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -48,8 +53,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
-  const handleBrushChange = (timeRange: any) => {
-    if (!timeRange || !timeRange.startIndex || !timeRange.endIndex) {
+  const handleBrushChange = (timeRange: BrushStartEnd | null) => {
+    if (!timeRange?.startIndex || !timeRange?.endIndex) {
       setDateRange(null);
       return;
     }
