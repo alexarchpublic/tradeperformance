@@ -199,9 +199,13 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-                {hoveredTradeIndex !== null && hoveredTradeIndex >= 0 && hoveredTradeIndex < data.equityCurve.length && (
+                {hoveredTradeIndex !== null && 
+                 hoveredTradeIndex >= 0 && 
+                 hoveredTradeIndex < visibleData.length && 
+                 visibleData[hoveredTradeIndex] && 
+                 visibleData[hoveredTradeIndex].date && (
                   <ReferenceLine
-                    x={data.equityCurve[hoveredTradeIndex].date}
+                    x={visibleData[hoveredTradeIndex].date}
                     stroke="#666"
                     strokeDasharray="3 3"
                   />
@@ -254,9 +258,13 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     strokeWidth={2}
                     isAnimationActive={false}
                   />
-                  {hoveredTradeIndex !== null && hoveredTradeIndex >= 0 && hoveredTradeIndex < data.equityCurve.length && (
+                  {hoveredTradeIndex !== null && 
+                   hoveredTradeIndex >= 0 && 
+                   hoveredTradeIndex < visibleData.length && 
+                   visibleData[hoveredTradeIndex] && 
+                   visibleData[hoveredTradeIndex].date && (
                     <ReferenceLine
-                      x={data.equityCurve[hoveredTradeIndex].date}
+                      x={visibleData[hoveredTradeIndex].date}
                       stroke="#666"
                       strokeDasharray="3 3"
                     />
