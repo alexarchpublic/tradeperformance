@@ -45,10 +45,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const getVisibleData = () => {
     if (!brushDomain || brushDomain.startIndex === undefined || brushDomain.endIndex === undefined) {
-      console.debug('Using full data range:', { dataLength: data.equityCurve.length });
+      console.error('Using full data range:', { dataLength: data.equityCurve.length });
       return data.equityCurve;
     }
-    console.debug('Using brushed data range:', { 
+    console.error('Using brushed data range:', { 
       start: brushDomain.startIndex, 
       end: brushDomain.endIndex,
       dataLength: data.equityCurve.length 
@@ -58,7 +58,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   // Find the corresponding equity curve index for the hovered trade
   const findEquityCurveIndex = (tradeIndex: number | null) => {
-    console.debug('Finding equity curve index:', { 
+    console.error('Finding equity curve index:', { 
       tradeIndex,
       equityCurveLength: data.equityCurve.length,
       hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
@@ -112,14 +112,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
   const handleBrushChange = (newIndex: BrushStartEndIndex) => {
-    console.debug('Brush change event:', { 
+    console.error('Brush change event:', { 
       newIndex,
       currentDomain: brushDomain,
       dataLength: data.equityCurve.length
     });
 
     if (!newIndex || newIndex.startIndex === undefined || newIndex.endIndex === undefined) {
-      console.debug('Resetting brush domain to null');
+      console.error('Resetting brush domain to null');
       setBrushDomain(null);
       return;
     }
@@ -127,7 +127,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     const boundedStart = Math.max(0, newIndex.startIndex);
     const boundedEnd = Math.min(data.equityCurve.length, newIndex.endIndex);
     
-    console.debug('Setting new brush domain:', {
+    console.error('Setting new brush domain:', {
       originalStart: newIndex.startIndex,
       originalEnd: newIndex.endIndex,
       boundedStart,
@@ -154,7 +154,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   // Log component render state
-  console.debug('TradeChart render state:', {
+  console.error('TradeChart render state:', {
     hoveredTradeIndex,
     equityCurveIndex,
     visibleDataLength: visibleData.length,

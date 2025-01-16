@@ -45,7 +45,7 @@ export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListPr
   if (!data?.trades?.length) return null;
 
   const handleTradeHover = (index: number | null) => {
-    console.debug('Trade hover event:', {
+    console.error('Trade hover event:', {
       index,
       totalTrades: data.trades.length,
       isValidIndex: index === null || (index >= 0 && index < data.trades.length)
@@ -54,12 +54,12 @@ export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListPr
     if (index === null || (index >= 0 && index < data.trades.length)) {
       onTradeHover(index);
     } else {
-      console.warn('Invalid trade index:', index);
+      console.error('Invalid trade index:', index);
     }
   };
 
   // Log component render
-  console.debug('TradeList render:', {
+  console.error('TradeList render:', {
     totalTrades: data.trades.length,
     hoveredTradeIndex
   });
