@@ -28,6 +28,11 @@ interface BrushDomain {
   endIndex?: number;
 }
 
+interface BrushStartEndIndex {
+  startIndex?: number;
+  endIndex?: number;
+}
+
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -94,15 +99,15 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
-  const handleBrushChange = (domain: any) => {
-    if (!domain || !domain.startIndex || !domain.endIndex) {
+  const handleBrushChange = (newIndex: BrushStartEndIndex) => {
+    if (!newIndex || newIndex.startIndex === undefined || newIndex.endIndex === undefined) {
       setBrushDomain(null);
       return;
     }
     
     setBrushDomain({
-      startIndex: Math.max(0, domain.startIndex),
-      endIndex: Math.min(data.equityCurve.length, domain.endIndex)
+      startIndex: Math.max(0, newIndex.startIndex),
+      endIndex: Math.min(data.equityCurve.length, newIndex.endIndex)
     });
   };
 
