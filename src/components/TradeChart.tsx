@@ -55,18 +55,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return visibleData.length > 0 ? visibleData : data.equityCurve;
   };
 
-  const handleBrushChange = (brushRange: BrushStartEnd) => {
-    if (!brushRange || brushRange.startIndex === undefined || brushRange.endIndex === undefined) {
+  const handleBrushChange = (range: any) => {
+    if (!range || !range.startIndex || !range.endIndex) {
       setDateRange(null);
       return;
     }
 
-    // Ensure indices are within bounds
-    const startIndex = Math.max(0, Math.min(brushRange.startIndex, data.equityCurve.length - 1));
-    const endIndex = Math.max(startIndex, Math.min(brushRange.endIndex, data.equityCurve.length - 1));
-
-    const startDate = new Date(data.equityCurve[startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[endIndex].date).getTime();
+    const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
 
     setDateRange({
       start: startDate,
@@ -227,10 +223,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={8}
-                  gap={1}
-                  data={data.equityCurve}
-                  startIndex={0}
-                  endIndex={data.equityCurve.length - 1}
+                  y={0}
                   alwaysShowText={true}
                 />
               </LineChart>
