@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Brush,
   ReferenceLine,
@@ -33,12 +32,6 @@ const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
   drawdown: "#ef4444",
-};
-
-const METRIC_LABELS = {
-  equity: "Account Value ($)",
-  pnl: "Trade P&L ($)",
-  drawdown: "Peak to Peak Drawdown (%)",
 };
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
