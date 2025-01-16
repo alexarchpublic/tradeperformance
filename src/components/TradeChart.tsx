@@ -9,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Brush,
-  ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -22,6 +21,12 @@ interface TradeChartProps {
   selectedMetrics: string[];
   hoveredTradeIndex: number | null;
 }
+
+// Type for Recharts brush domain from their documentation
+type BrushStartEndIndex = {
+  startIndex?: number;
+  endIndex?: number;
+} | null;
 
 const METRIC_COLORS = {
   equity: "#22c55e",
@@ -46,23 +51,17 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return data.equityCurve.slice(brushDomain[0], brushDomain[1]);
   };
 
-  const handleBrushChange = (domain: any) => {
+  const handleBrushChange = (domain: BrushStartEndIndex) => {
     console.debug('Brush change event:', { domain });
     
-    if (!domain) {
+    if (!domain || typeof domain.startIndex !== 'number' || typeof domain.endIndex !== 'number') {
       console.debug('Resetting brush domain to null');
       setBrushDomain(null);
       return;
     }
 
-    const [start, end] = domain;
-    if (typeof start !== 'number' || typeof end !== 'number') {
-      console.error('Invalid brush domain:', domain);
-      return;
-    }
-
-    const boundedStart = Math.max(0, Math.floor(start));
-    const boundedEnd = Math.min(data.equityCurve.length, Math.ceil(end));
+    const boundedStart = Math.max(0, Math.floor(domain.startIndex));
+    const boundedEnd = Math.min(data.equityCurve.length, Math.ceil(domain.endIndex));
     
     console.debug('Setting new brush domain:', {
       start: boundedStart,
