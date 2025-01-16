@@ -24,14 +24,14 @@ interface TradeChartProps {
 }
 
 interface BrushDomain {
-  startIndex?: number;
-  endIndex?: number;
+  startIndex: number;
+  endIndex: number;
 }
 
-interface BrushStartEndIndex {
+type BrushIndex = {
   startIndex?: number;
   endIndex?: number;
-}
+} | null;
 
 const METRIC_COLORS = {
   equity: "#22c55e",
@@ -127,14 +127,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
-  const handleBrushChange = (domain: any) => {
+  const handleBrushChange = (domain: BrushIndex) => {
     console.error('Brush change event:', { 
       domain,
       dataLength: data.equityCurve.length
     });
 
     // If domain is null or empty, reset to show all data
-    if (!domain || !domain.startIndex || !domain.endIndex) {
+    if (!domain?.startIndex || !domain?.endIndex) {
       console.error('Resetting brush domain to null');
       setBrushDomain(null);
       return;
