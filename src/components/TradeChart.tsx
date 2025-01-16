@@ -60,11 +60,11 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const findEquityCurveIndex = (tradeIndex: number | null) => {
     console.error('Finding equity curve index:', { 
       tradeIndex,
-      equityCurveLength: data.equityCurve.length,
-      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
+      visibleDataLength: visibleData.length,
+      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < visibleData.length
     });
     
-    if (tradeIndex === null || tradeIndex < 0 || !data.equityCurve[tradeIndex]) return null;
+    if (tradeIndex === null || tradeIndex < 0 || !visibleData[tradeIndex]) return null;
     return tradeIndex;
   };
 
@@ -246,7 +246,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 )}
                 {equityCurveIndex !== null && (
                   <ReferenceLine
-                    x={data.equityCurve[equityCurveIndex].date}
+                    x={visibleData[equityCurveIndex]?.date}
                     stroke="#666"
                     strokeDasharray="3 3"
                   />
@@ -301,7 +301,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   />
                   {equityCurveIndex !== null && (
                     <ReferenceLine
-                      x={data.equityCurve[equityCurveIndex].date}
+                      x={visibleData[equityCurveIndex]?.date}
                       stroke="#666"
                       strokeDasharray="3 3"
                     />
