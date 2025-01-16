@@ -52,7 +52,13 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   const handleBrushChange = (domain: BrushStartEndIndex) => {
-    console.debug('Brush change event:', { domain });
+    if (domain && typeof domain.startIndex === 'number' && typeof domain.endIndex === 'number') {
+      // Ensure we have at least a minimum range of data points
+      const minRange = Math.min(50, data.equityCurve.length);
+      if (domain.endIndex - domain.startIndex < minRange) {
+        domain.endIndex = Math.min(domain.startIndex + minRange, data.equityCurve.length - 1);
+      }
+    }
     setBrushDomain(domain);
   };
 
@@ -207,6 +213,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   stroke="#8884d8"
                   onChange={handleBrushChange}
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
+                  fill="#1f2937"
+                  travellerWidth={10}
+                  startIndex={0}
+                  endIndex={data.equityCurve.length - 1}
                 />
               </LineChart>
             </ResponsiveContainer>
