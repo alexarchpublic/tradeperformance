@@ -39,27 +39,43 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain || typeof brushDomain.startIndex !== 'number' || typeof brushDomain.endIndex !== 'number') {
-      console.debug('Using full data range:', { dataLength: data.equityCurve.length });
+    if (!brushDomain || 
+        typeof brushDomain.startIndex !== 'number' || 
+        typeof brushDomain.endIndex !== 'number' ||
+        isNaN(brushDomain.startIndex) || 
+        isNaN(brushDomain.endIndex) ||
+        brushDomain.startIndex < 0 ||
+        brushDomain.endIndex >= data.equityCurve.length) {
       return data.equityCurve;
     }
-    console.debug('Using brushed data range:', { 
-      start: brushDomain.startIndex, 
-      end: brushDomain.endIndex,
-      dataLength: data.equityCurve.length 
-    });
-    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex);
+    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex + 1);
   };
 
   const handleBrushChange = (domain: BrushStartEndIndex) => {
-    if (domain && typeof domain.startIndex === 'number' && typeof domain.endIndex === 'number') {
-      // Ensure we have at least a minimum range of data points
-      const minRange = Math.min(50, data.equityCurve.length);
-      if (domain.endIndex - domain.startIndex < minRange) {
-        domain.endIndex = Math.min(domain.startIndex + minRange, data.equityCurve.length - 1);
-      }
+    if (!domain || 
+        typeof domain.startIndex !== 'number' || 
+        typeof domain.endIndex !== 'number' ||
+        isNaN(domain.startIndex) || 
+        isNaN(domain.endIndex)) {
+      setBrushDomain(null);
+      return;
     }
-    setBrushDomain(domain);
+
+    // Ensure indices are within valid range
+    const startIndex = Math.max(0, Math.min(domain.startIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(0, Math.min(domain.endIndex, data.equityCurve.length - 1));
+
+    // Ensure minimum range
+    const minRange = Math.min(50, data.equityCurve.length);
+    const finalEndIndex = Math.min(
+      data.equityCurve.length - 1,
+      Math.max(endIndex, startIndex + minRange - 1)
+    );
+
+    setBrushDomain({
+      startIndex,
+      endIndex: finalEndIndex
+    });
   };
 
   const calculateDomains = () => {
@@ -215,8 +231,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={10}
-                  startIndex={0}
-                  endIndex={data.equityCurve.length - 1}
+                  data={data.equityCurve}
+                  startIndex={brushDomain?.startIndex ?? 0}
+                  endIndex={brushDomain?.endIndex ?? (data.equityCurve.length - 1)}
                 />
               </LineChart>
             </ResponsiveContainer>
