@@ -65,23 +65,22 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
     });
     
-    if (tradeIndex === null) return null;
-    
-    // If we're using a brush, adjust the index relative to the visible range
-    if (brushDomain?.startIndex !== undefined) {
-      const adjustedIndex = tradeIndex - brushDomain.startIndex;
-      if (adjustedIndex >= 0 && adjustedIndex < visibleData.length) {
-        return adjustedIndex;
+    if (tradeIndex === null || tradeIndex < 0 || tradeIndex >= data.equityCurve.length) {
+      return null;
+    }
+
+    // If we're using a brush, we need to check if the trade is within the visible range
+    if (brushDomain) {
+      // Check if the trade index is within the brush domain
+      if (tradeIndex >= brushDomain.startIndex && tradeIndex < brushDomain.endIndex) {
+        // Convert from full data index to visible data index
+        return tradeIndex - brushDomain.startIndex;
       }
       return null;
     }
     
-    // Otherwise use the original index if it's valid
-    if (tradeIndex >= 0 && tradeIndex < visibleData.length) {
-      return tradeIndex;
-    }
-    
-    return null;
+    // No brush active, use the original index if it's valid
+    return tradeIndex;
   };
 
   const calculateDomains = () => {
@@ -270,9 +269,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-                {equityCurveIndex !== null && (
+                {equityCurveIndex !== null && equityCurveIndex >= 0 && equityCurveIndex < visibleData.length && (
                   <ReferenceLine
-                    x={visibleData[equityCurveIndex]?.date}
+                    x={visibleData[equityCurveIndex].date}
                     stroke="#666"
                     strokeDasharray="3 3"
                   />
@@ -325,9 +324,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     strokeWidth={2}
                     isAnimationActive={false}
                   />
-                  {equityCurveIndex !== null && (
+                  {equityCurveIndex !== null && equityCurveIndex >= 0 && equityCurveIndex < visibleData.length && (
                     <ReferenceLine
-                      x={visibleData[equityCurveIndex]?.date}
+                      x={visibleData[equityCurveIndex].date}
                       stroke="#666"
                       strokeDasharray="3 3"
                     />
