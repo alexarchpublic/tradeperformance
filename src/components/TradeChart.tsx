@@ -35,15 +35,21 @@ const METRIC_COLORS = {
 };
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
-  const [brushDomain, setBrushDomain] = useState<[Date, Date] | null>(null);
+  const [brushDomain, setBrushDomain] = useState<BrushDomain | null>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain) return data.equityCurve;
-    return data.equityCurve.filter(point => {
-      const pointDate = new Date(point.date);
-      return pointDate >= brushDomain[0] && pointDate <= brushDomain[1];
-    });
+    if (!brushDomain || !brushDomain.startIndex || !brushDomain.endIndex) return data.equityCurve;
+    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex + 1);
+  };
+
+  // Find the corresponding equity curve index for the hovered trade
+  const findEquityCurveIndex = (tradeIndex: number | null) => {
+    if (tradeIndex === null) return null;
+    const tradeDate = new Date(data.equityCurve[tradeIndex].date).getTime();
+    return data.equityCurve.findIndex(point => 
+      new Date(point.date).getTime() === tradeDate
+    );
   };
 
   const calculateDomains = () => {
@@ -87,22 +93,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const visibleData = getVisibleData();
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
+  const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
-  const handleBrushChange = (domain: BrushDomain) => {
+  const handleBrushChange = (domain: BrushDomain | null) => {
     if (!domain || (domain.startIndex === undefined && domain.endIndex === undefined)) {
       setBrushDomain(null);
       return;
     }
-    const startDate = domain.startIndex !== undefined
-      ? new Date(data.equityCurve[domain.startIndex].date)
-      : brushDomain?.[0];
-    const endDate = domain.endIndex !== undefined
-      ? new Date(data.equityCurve[domain.endIndex].date)
-      : brushDomain?.[1];
-    
-    if (startDate && endDate) {
-      setBrushDomain([startDate, endDate]);
-    }
+    setBrushDomain(domain);
   };
 
   const formatDollar = (value: number) => {
@@ -199,13 +197,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-                {hoveredTradeIndex !== null && 
-                 hoveredTradeIndex >= 0 && 
-                 hoveredTradeIndex < visibleData.length && 
-                 visibleData[hoveredTradeIndex] && 
-                 visibleData[hoveredTradeIndex].date && (
+                {equityCurveIndex !== null && equityCurveIndex >= 0 && (
                   <ReferenceLine
-                    x={visibleData[hoveredTradeIndex].date}
+                    x={data.equityCurve[equityCurveIndex].date}
                     stroke="#666"
                     strokeDasharray="3 3"
                   />
@@ -258,13 +252,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     strokeWidth={2}
                     isAnimationActive={false}
                   />
-                  {hoveredTradeIndex !== null && 
-                   hoveredTradeIndex >= 0 && 
-                   hoveredTradeIndex < visibleData.length && 
-                   visibleData[hoveredTradeIndex] && 
-                   visibleData[hoveredTradeIndex].date && (
+                  {equityCurveIndex !== null && equityCurveIndex >= 0 && (
                     <ReferenceLine
-                      x={visibleData[hoveredTradeIndex].date}
+                      x={data.equityCurve[equityCurveIndex].date}
                       stroke="#666"
                       strokeDasharray="3 3"
                     />
