@@ -55,19 +55,19 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return visibleData.length > 0 ? visibleData : data.equityCurve;
   };
 
-  const handleBrushChange = (timeRange: BrushStartEnd | null) => {
-    if (!timeRange || timeRange.startIndex === undefined || timeRange.endIndex === undefined) {
+  const handleBrushChange = (brushRange: BrushStartEnd) => {
+    if (!brushRange || brushRange.startIndex === undefined || brushRange.endIndex === undefined) {
       setDateRange(null);
       return;
     }
 
     // Ensure indices are within bounds
-    const startIndex = Math.max(0, Math.min(timeRange.startIndex, data.equityCurve.length - 1));
-    const endIndex = Math.max(0, Math.min(timeRange.endIndex, data.equityCurve.length - 1));
+    const startIndex = Math.max(0, Math.min(brushRange.startIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(startIndex, Math.min(brushRange.endIndex, data.equityCurve.length - 1));
 
     const startDate = new Date(data.equityCurve[startIndex].date).getTime();
     const endDate = new Date(data.equityCurve[endIndex].date).getTime();
-    
+
     setDateRange({
       start: startDate,
       end: endDate
@@ -221,17 +221,17 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 )}
                 <Brush
                   dataKey="date"
-                  height={30}
+                  height={40}
                   stroke="#8884d8"
                   onChange={handleBrushChange}
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
-                  travellerWidth={10}
-                  alwaysShowText={true}
-                  data={data.equityCurve}
-                  x={0}
-                  y={0}
+                  travellerWidth={8}
                   gap={1}
+                  data={data.equityCurve}
+                  startIndex={0}
+                  endIndex={data.equityCurve.length - 1}
+                  alwaysShowText={true}
                 />
               </LineChart>
             </ResponsiveContainer>
