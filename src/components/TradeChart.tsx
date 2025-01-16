@@ -56,25 +56,23 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   };
 
   const handleBrushChange = (range: BrushRange) => {
-    if (!range) {
-      setDateRange(null);
-      return;
-    }
-
-    if (range.startIndex === undefined || range.endIndex === undefined) {
+    if (!range || typeof range.startIndex !== 'number' || typeof range.endIndex !== 'number') {
       return;
     }
 
     const startIndex = Math.max(0, Math.min(range.startIndex, data.equityCurve.length - 1));
     const endIndex = Math.max(startIndex, Math.min(range.endIndex, data.equityCurve.length - 1));
 
-    const startDate = new Date(data.equityCurve[startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[endIndex].date).getTime();
+    // Only update if indices are different
+    if (startIndex !== endIndex) {
+      const startDate = new Date(data.equityCurve[startIndex].date).getTime();
+      const endDate = new Date(data.equityCurve[endIndex].date).getTime();
 
-    setDateRange({
-      start: startDate,
-      end: endDate
-    });
+      setDateRange({
+        start: startDate,
+        end: endDate
+      });
+    }
   };
 
   const calculateDomains = () => {
@@ -147,7 +145,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
         <div className="flex flex-col h-full">
           <div className={showPnLSubgraph ? "h-2/3" : "h-full"}>
             <ResponsiveContainer>
-              <LineChart data={visibleData} margin={{ top: 20, right: 70, bottom: 30, left: 70 }}>
+              <LineChart 
+                data={visibleData} 
+                margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
                   dataKey="date"
@@ -230,10 +231,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={8}
-                  y={320}
                   startIndex={0}
                   endIndex={data.equityCurve.length - 1}
                   alwaysShowText={true}
+                  gap={5}
                 />
               </LineChart>
             </ResponsiveContainer>
