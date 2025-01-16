@@ -35,40 +35,25 @@ const METRIC_COLORS = {
 };
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
-  const [brushDomain, setBrushDomain] = useState<[number, number] | null>(null);
+  const [brushDomain, setBrushDomain] = useState<BrushStartEndIndex>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain) {
+    if (!brushDomain || typeof brushDomain.startIndex !== 'number' || typeof brushDomain.endIndex !== 'number') {
       console.debug('Using full data range:', { dataLength: data.equityCurve.length });
       return data.equityCurve;
     }
     console.debug('Using brushed data range:', { 
-      start: brushDomain[0], 
-      end: brushDomain[1],
+      start: brushDomain.startIndex, 
+      end: brushDomain.endIndex,
       dataLength: data.equityCurve.length 
     });
-    return data.equityCurve.slice(brushDomain[0], brushDomain[1]);
+    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex);
   };
 
   const handleBrushChange = (domain: BrushStartEndIndex) => {
     console.debug('Brush change event:', { domain });
-    
-    if (!domain || typeof domain.startIndex !== 'number' || typeof domain.endIndex !== 'number') {
-      console.debug('Resetting brush domain to null');
-      setBrushDomain(null);
-      return;
-    }
-
-    const boundedStart = Math.max(0, Math.floor(domain.startIndex));
-    const boundedEnd = Math.min(data.equityCurve.length, Math.ceil(domain.endIndex));
-    
-    console.debug('Setting new brush domain:', {
-      start: boundedStart,
-      end: boundedEnd
-    });
-
-    setBrushDomain([boundedStart, boundedEnd]);
+    setBrushDomain(domain);
   };
 
   const calculateDomains = () => {
