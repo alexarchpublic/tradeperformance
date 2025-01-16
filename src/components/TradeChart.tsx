@@ -23,16 +23,6 @@ interface TradeChartProps {
   hoveredTradeIndex: number | null;
 }
 
-interface BrushDomain {
-  startIndex: number;
-  endIndex: number;
-}
-
-type BrushIndex = {
-  startIndex?: number;
-  endIndex?: number;
-} | null;
-
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -40,47 +30,46 @@ const METRIC_COLORS = {
 };
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
-  const [brushDomain, setBrushDomain] = useState<BrushDomain | null>(null);
+  const [brushDomain, setBrushDomain] = useState<[number, number] | null>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain || brushDomain.startIndex === undefined || brushDomain.endIndex === undefined) {
+    if (!brushDomain) {
       console.debug('Using full data range:', { dataLength: data.equityCurve.length });
       return data.equityCurve;
     }
     console.debug('Using brushed data range:', { 
-      start: brushDomain.startIndex, 
-      end: brushDomain.endIndex,
+      start: brushDomain[0], 
+      end: brushDomain[1],
       dataLength: data.equityCurve.length 
     });
-    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex);
+    return data.equityCurve.slice(brushDomain[0], brushDomain[1]);
   };
 
-  // Find the corresponding equity curve index for the hovered trade
-  const findEquityCurveIndex = (tradeIndex: number | null) => {
-    console.debug('Finding equity curve index:', { 
-      tradeIndex,
-      visibleDataLength: visibleData.length,
-      brushDomain,
-      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
-    });
+  const handleBrushChange = (domain: any) => {
+    console.debug('Brush change event:', { domain });
     
-    if (tradeIndex === null || tradeIndex < 0 || tradeIndex >= data.equityCurve.length) {
-      return null;
+    if (!domain) {
+      console.debug('Resetting brush domain to null');
+      setBrushDomain(null);
+      return;
     }
 
-    // If we're using a brush, we need to check if the trade is within the visible range
-    if (brushDomain) {
-      // Check if the trade index is within the brush domain
-      if (tradeIndex >= brushDomain.startIndex && tradeIndex < brushDomain.endIndex) {
-        // Convert from full data index to visible data index
-        return tradeIndex - brushDomain.startIndex;
-      }
-      return null;
+    const [start, end] = domain;
+    if (typeof start !== 'number' || typeof end !== 'number') {
+      console.error('Invalid brush domain:', domain);
+      return;
     }
+
+    const boundedStart = Math.max(0, Math.floor(start));
+    const boundedEnd = Math.min(data.equityCurve.length, Math.ceil(end));
     
-    // No brush active, use the original index if it's valid
-    return tradeIndex;
+    console.debug('Setting new brush domain:', {
+      start: boundedStart,
+      end: boundedEnd
+    });
+
+    setBrushDomain([boundedStart, boundedEnd]);
   };
 
   const calculateDomains = () => {
@@ -124,46 +113,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const visibleData = getVisibleData();
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
-  const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
-
-  const handleBrushChange = (domain: BrushIndex) => {
-    console.debug('Brush change event:', { 
-      domain,
-      dataLength: data.equityCurve.length
-    });
-
-    // Reset to show all data if brush is cleared
-    if (!domain) {
-      console.debug('Resetting brush domain to null');
-      setBrushDomain(null);
-      return;
-    }
-
-    // Extract start and end indices from the domain object
-    const startIndex = typeof domain === 'object' ? domain.startIndex : undefined;
-    const endIndex = typeof domain === 'object' ? domain.endIndex : undefined;
-
-    // Validate indices
-    if (typeof startIndex !== 'number' || typeof endIndex !== 'number') {
-      console.error('Invalid brush domain indices:', { startIndex, endIndex });
-      return;
-    }
-    
-    const boundedStart = Math.max(0, startIndex);
-    const boundedEnd = Math.min(data.equityCurve.length, endIndex);
-    
-    console.debug('Setting new brush domain:', {
-      startIndex,
-      endIndex,
-      boundedStart,
-      boundedEnd
-    });
-
-    setBrushDomain({
-      startIndex: boundedStart,
-      endIndex: boundedEnd
-    });
-  };
 
   const formatDollar = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -181,7 +130,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   // Log component render state
   console.debug('TradeChart render state:', {
     hoveredTradeIndex,
-    equityCurveIndex,
     visibleDataLength: visibleData.length,
     totalDataLength: data.equityCurve.length,
     selectedMetrics,
@@ -269,13 +217,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-                {equityCurveIndex !== null && equityCurveIndex >= 0 && equityCurveIndex < visibleData.length && (
-                  <ReferenceLine
-                    x={visibleData[equityCurveIndex].date}
-                    stroke="#666"
-                    strokeDasharray="3 3"
-                  />
-                )}
                 <Brush
                   dataKey="date"
                   height={30}
@@ -324,13 +265,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     strokeWidth={2}
                     isAnimationActive={false}
                   />
-                  {equityCurveIndex !== null && equityCurveIndex >= 0 && equityCurveIndex < visibleData.length && (
-                    <ReferenceLine
-                      x={visibleData[equityCurveIndex].date}
-                      stroke="#666"
-                      strokeDasharray="3 3"
-                    />
-                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
