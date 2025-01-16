@@ -27,7 +27,7 @@ type DateRange = {
   end: number;
 } | null;
 
-interface BrushStartEnd {
+interface BrushRange {
   startIndex?: number;
   endIndex?: number;
 }
@@ -55,8 +55,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return visibleData.length > 0 ? visibleData : data.equityCurve;
   };
 
-  const handleBrushChange = (range: any) => {
-    if (!range || !range.startIndex || !range.endIndex) {
+  const handleBrushChange = (range: BrushRange) => {
+    if (!range?.startIndex || !range?.endIndex) {
       setDateRange(null);
       return;
     }
