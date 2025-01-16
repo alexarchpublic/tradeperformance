@@ -21,6 +21,7 @@ interface TradeChartProps {
     equityCurve: EquityCurvePoint[];
   };
   selectedMetrics: string[];
+  hoveredTradeIndex: number | null;
 }
 
 interface BrushDomain {
@@ -40,7 +41,7 @@ const METRIC_LABELS = {
   drawdown: "Peak to Peak Drawdown (%)",
 };
 
-export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
+export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [brushDomain, setBrushDomain] = useState<[Date, Date] | null>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
