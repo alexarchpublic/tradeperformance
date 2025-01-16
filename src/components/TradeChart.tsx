@@ -39,17 +39,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain || !brushDomain.startIndex || !brushDomain.endIndex) return data.equityCurve;
-    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex + 1);
+    if (!brushDomain || brushDomain.startIndex === undefined || brushDomain.endIndex === undefined) {
+      return data.equityCurve;
+    }
+    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex);
   };
 
   // Find the corresponding equity curve index for the hovered trade
   const findEquityCurveIndex = (tradeIndex: number | null) => {
-    if (tradeIndex === null) return null;
-    const tradeDate = new Date(data.equityCurve[tradeIndex].date).getTime();
-    return data.equityCurve.findIndex(point => 
-      new Date(point.date).getTime() === tradeDate
-    );
+    if (tradeIndex === null || tradeIndex < 0 || !data.equityCurve[tradeIndex]) return null;
+    return tradeIndex;
   };
 
   const calculateDomains = () => {
@@ -95,12 +94,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
-  const handleBrushChange = (domain: BrushDomain | null) => {
-    if (!domain || (domain.startIndex === undefined && domain.endIndex === undefined)) {
+  const handleBrushChange = (domain: any) => {
+    if (!domain || !domain.startIndex || !domain.endIndex) {
       setBrushDomain(null);
       return;
     }
-    setBrushDomain(domain);
+    
+    setBrushDomain({
+      startIndex: Math.max(0, domain.startIndex),
+      endIndex: Math.min(data.equityCurve.length, domain.endIndex)
+    });
   };
 
   const formatDollar = (value: number) => {
@@ -197,7 +200,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-                {equityCurveIndex !== null && equityCurveIndex >= 0 && (
+                {equityCurveIndex !== null && (
                   <ReferenceLine
                     x={data.equityCurve[equityCurveIndex].date}
                     stroke="#666"
@@ -252,7 +255,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     strokeWidth={2}
                     isAnimationActive={false}
                   />
-                  {equityCurveIndex !== null && equityCurveIndex >= 0 && (
+                  {equityCurveIndex !== null && (
                     <ReferenceLine
                       x={data.equityCurve[equityCurveIndex].date}
                       stroke="#666"
