@@ -38,6 +38,10 @@ interface DrawdownPeriod {
   drawdown: number;
 }
 
+interface RawTradeData {
+  [key: string]: string;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const algorithmsJson = searchParams.get('algorithms');
@@ -51,8 +55,8 @@ export async function GET(request: Request) {
     const algorithms: Algorithm[] = JSON.parse(algorithmsJson);
     let totalInitialCapital = 0;
     let totalPnL = 0;
-    let combinedTrades: any[] = [];
-    let combinedEquityCurve: any[] = [];
+    let combinedTrades: TradeData[] = [];
+    let combinedEquityCurve: EquityCurvePoint[] = [];
     
     // Track which datasets we've already processed
     const processedDatasets = new Set<string>();
@@ -74,7 +78,7 @@ export async function GET(request: Request) {
         const headers = lines[0].split(',');
         const trades = lines.slice(1).map(line => {
           const values = line.split(',');
-          const trade: any = {};
+          const trade: TradeData = {} as TradeData;
           headers.forEach((header, index) => {
             const value = values[index];
             if (['Entry_Price', 'Exit_Price', 'Contracts', 'PnL', 'PnL_%', 'Cumulative_PnL_%', 'Peak_to_Peak_DD_%', 'Duration_Hours', 'Max_Favorable_Excursion', 'Max_Adverse_Excursion', 'Trade_Efficiency'].includes(header)) {
