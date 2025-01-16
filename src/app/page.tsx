@@ -128,8 +128,9 @@ export default function Home() {
       {/* Trade List */}
       {chartData && (
         <TradeList
-          trades={chartData.trades}
+          data={chartData}
           onTradeHover={setHoveredTradeIndex}
+          hoveredTradeIndex={hoveredTradeIndex}
         />
       )}
 
