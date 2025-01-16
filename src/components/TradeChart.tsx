@@ -173,37 +173,23 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 <Tooltip
                   trigger="hover"
                   formatter={(value: number, name: string) => {
-                    const label = METRIC_LABELS[name as keyof typeof METRIC_LABELS] || name;
                     if (name === 'Peak to Peak Drawdown') {
-                      return [formatPercent(value), label];
+                      return [formatPercent(value), name];
                     }
-                    return [formatDollar(value), label];
+                    return [formatDollar(value), name];
                   }}
-                  labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                  labelFormatter={(label) => format(new Date(label), "MMM d, yyyy HH:mm")}
                 />
-                <Legend />
                 {selectedMetrics.includes('equity') && (
                   <Line
-                    type="stepAfter"
-                    dataKey="equity"
-                    name="Equity"
-                    stroke={METRIC_COLORS.equity}
-                    yAxisId="dollar"
-                    dot={false}
-                    activeDot={{ r: 4 }}
-                  />
-                )}
-                {selectedMetrics.includes('pnl') && !showPnLSubgraph && (
-                  <Line
                     type="monotone"
-                    dataKey="pnl"
-                    name="PnL"
-                    stroke={METRIC_COLORS.pnl}
+                    dataKey="equity"
+                    name="Account Value"
+                    stroke={METRIC_COLORS.equity}
                     yAxisId="dollar"
                     dot={false}
                     activeDot={{ r: 6 }}
                     strokeWidth={2}
-                    connectNulls={true}
                     isAnimationActive={false}
                   />
                 )}
@@ -215,19 +201,33 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     stroke={METRIC_COLORS.drawdown}
                     yAxisId="drawdown"
                     dot={false}
-                    activeDot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                    isAnimationActive={false}
                   />
                 )}
+                {hoveredTradeIndex !== null && (
+                  <ReferenceLine
+                    x={data.equityCurve[hoveredTradeIndex].date}
+                    stroke="#666"
+                    strokeDasharray="3 3"
+                  />
+                )}
+                <Brush
+                  dataKey="date"
+                  height={30}
+                  stroke="#8884d8"
+                  onChange={handleBrushChange}
+                  tickFormatter={(date) => format(new Date(date), "MMM d")}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
-
           {showPnLSubgraph && (
             <div className="h-1/3">
               <ResponsiveContainer>
                 <LineChart data={visibleData} margin={{ top: 20, right: 70, bottom: 30, left: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" opacity={0.5} yAxisId="pnl" />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
@@ -235,8 +235,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     padding={{ left: 20, right: 20 }}
                   />
                   <YAxis
-                    yAxisId="pnl"
-                    orientation="left"
                     tickFormatter={(value) => formatDollar(value)}
                     domain={pnlDomain}
                     tick={{ fontSize: 12 }}
@@ -250,39 +248,30 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   />
                   <Tooltip
                     trigger="hover"
-                    formatter={(value: number) => [formatDollar(value), "Trade P&L ($)"]}
-                    labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                    formatter={(value: number) => [formatDollar(value), "P&L"]}
+                    labelFormatter={(label) => format(new Date(label), "MMM d, yyyy HH:mm")}
                   />
                   <Line
                     type="monotone"
                     dataKey="pnl"
-                    name="PnL"
+                    name="P&L"
                     stroke={METRIC_COLORS.pnl}
-                    yAxisId="pnl"
                     dot={false}
                     activeDot={{ r: 6 }}
                     strokeWidth={2}
-                    connectNulls={true}
                     isAnimationActive={false}
                   />
+                  {hoveredTradeIndex !== null && (
+                    <ReferenceLine
+                      x={data.equityCurve[hoveredTradeIndex].date}
+                      stroke="#666"
+                      strokeDasharray="3 3"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
-
-          <div className="h-[30px]">
-            <ResponsiveContainer>
-              <LineChart data={data.equityCurve} margin={{ top: 0, right: 70, bottom: 0, left: 70 }}>
-                <Brush
-                  dataKey="date"
-                  height={30}
-                  stroke="#666"
-                  tickFormatter={(date) => format(new Date(date), "MMM d")}
-                  onChange={handleBrushChange}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </ResponsiveContainer>
     </div>
