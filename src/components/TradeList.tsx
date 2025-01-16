@@ -43,6 +43,13 @@ const ALGORITHM_NAMES = {
 export function TradeList({ trades, onTradeHover }: TradeListProps) {
   if (!trades?.length) return null;
 
+  const handleTradeHover = (index: number | null) => {
+    // Only trigger hover if index is within bounds
+    if (index === null || (index >= 0 && index < trades.length)) {
+      onTradeHover(index);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-6">Trade List</h2>
@@ -66,8 +73,8 @@ export function TradeList({ trades, onTradeHover }: TradeListProps) {
             {trades.map((trade, index) => (
               <TableRow
                 key={index}
-                onMouseEnter={() => onTradeHover(index)}
-                onMouseLeave={() => onTradeHover(null)}
+                onMouseEnter={() => handleTradeHover(index)}
+                onMouseLeave={() => handleTradeHover(null)}
               >
                 <TableCell>
                   {ALGORITHM_NAMES[trade.algorithm as keyof typeof ALGORITHM_NAMES]}
