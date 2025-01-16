@@ -61,11 +61,27 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     console.error('Finding equity curve index:', { 
       tradeIndex,
       visibleDataLength: visibleData.length,
-      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < visibleData.length
+      brushDomain,
+      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
     });
     
-    if (tradeIndex === null || tradeIndex < 0 || !visibleData[tradeIndex]) return null;
-    return tradeIndex;
+    if (tradeIndex === null) return null;
+    
+    // If we're using a brush, adjust the index relative to the visible range
+    if (brushDomain?.startIndex !== undefined) {
+      const adjustedIndex = tradeIndex - brushDomain.startIndex;
+      if (adjustedIndex >= 0 && adjustedIndex < visibleData.length) {
+        return adjustedIndex;
+      }
+      return null;
+    }
+    
+    // Otherwise use the original index if it's valid
+    if (tradeIndex >= 0 && tradeIndex < visibleData.length) {
+      return tradeIndex;
+    }
+    
+    return null;
   };
 
   const calculateDomains = () => {
@@ -111,25 +127,25 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
-  const handleBrushChange = (newIndex: BrushStartEndIndex) => {
+  const handleBrushChange = (domain: any) => {
     console.error('Brush change event:', { 
-      newIndex,
-      currentDomain: brushDomain,
+      domain,
       dataLength: data.equityCurve.length
     });
 
-    if (!newIndex || newIndex.startIndex === undefined || newIndex.endIndex === undefined) {
+    // If domain is null or empty, reset to show all data
+    if (!domain || !domain.startIndex || !domain.endIndex) {
       console.error('Resetting brush domain to null');
       setBrushDomain(null);
       return;
     }
     
-    const boundedStart = Math.max(0, newIndex.startIndex);
-    const boundedEnd = Math.min(data.equityCurve.length, newIndex.endIndex);
+    const boundedStart = Math.max(0, domain.startIndex);
+    const boundedEnd = Math.min(data.equityCurve.length, domain.endIndex);
     
     console.error('Setting new brush domain:', {
-      originalStart: newIndex.startIndex,
-      originalEnd: newIndex.endIndex,
+      originalStart: domain.startIndex,
+      originalEnd: domain.endIndex,
       boundedStart,
       boundedEnd
     });
