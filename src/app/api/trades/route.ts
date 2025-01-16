@@ -38,10 +38,6 @@ interface DrawdownPeriod {
   drawdown: number;
 }
 
-interface RawTradeData {
-  [key: string]: string;
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const algorithmsJson = searchParams.get('algorithms');
