@@ -22,10 +22,9 @@ interface TradeChartProps {
   hoveredTradeIndex: number | null;
 }
 
-// Type for Recharts brush domain from their documentation
-type BrushStartEndIndex = {
-  startIndex?: number;
-  endIndex?: number;
+type DateRange = {
+  start: number;
+  end: number;
 } | null;
 
 const METRIC_COLORS = {
@@ -35,46 +34,32 @@ const METRIC_COLORS = {
 };
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
-  const [brushDomain, setBrushDomain] = useState<BrushStartEndIndex>(null);
+  const [dateRange, setDateRange] = useState<DateRange>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
   const getVisibleData = () => {
-    if (!brushDomain || 
-        typeof brushDomain.startIndex !== 'number' || 
-        typeof brushDomain.endIndex !== 'number' ||
-        isNaN(brushDomain.startIndex) || 
-        isNaN(brushDomain.endIndex) ||
-        brushDomain.startIndex < 0 ||
-        brushDomain.endIndex >= data.equityCurve.length) {
+    if (!dateRange || !data.equityCurve.length) {
       return data.equityCurve;
     }
-    return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex + 1);
+
+    return data.equityCurve.filter(point => {
+      const timestamp = new Date(point.date).getTime();
+      return timestamp >= dateRange.start && timestamp <= dateRange.end;
+    });
   };
 
-  const handleBrushChange = (domain: BrushStartEndIndex) => {
-    if (!domain || 
-        typeof domain.startIndex !== 'number' || 
-        typeof domain.endIndex !== 'number' ||
-        isNaN(domain.startIndex) || 
-        isNaN(domain.endIndex)) {
-      setBrushDomain(null);
+  const handleBrushChange = (timeRange: any) => {
+    if (!timeRange || !timeRange.startIndex || !timeRange.endIndex) {
+      setDateRange(null);
       return;
     }
 
-    // Ensure indices are within valid range
-    const startIndex = Math.max(0, Math.min(domain.startIndex, data.equityCurve.length - 1));
-    const endIndex = Math.max(0, Math.min(domain.endIndex, data.equityCurve.length - 1));
-
-    // Ensure minimum range
-    const minRange = Math.min(50, data.equityCurve.length);
-    const finalEndIndex = Math.min(
-      data.equityCurve.length - 1,
-      Math.max(endIndex, startIndex + minRange - 1)
-    );
-
-    setBrushDomain({
-      startIndex,
-      endIndex: finalEndIndex
+    const startDate = new Date(data.equityCurve[timeRange.startIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[timeRange.endIndex].date).getTime();
+    
+    setDateRange({
+      start: startDate,
+      end: endDate
     });
   };
 
@@ -231,9 +216,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={10}
-                  data={data.equityCurve}
-                  startIndex={brushDomain?.startIndex ?? 0}
-                  endIndex={brushDomain?.endIndex ?? (data.equityCurve.length - 1)}
                 />
               </LineChart>
             </ResponsiveContainer>
