@@ -16,7 +16,6 @@ export default function Home() {
   const [algorithms, setAlgorithms] = useState<Algorithm[]>([{ dataset: 'nq_trades.csv', units: 1 }]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["equity"]);
   const [hoveredTradeIndex, setHoveredTradeIndex] = useState<number | null>(null);
-  const [initialCapital, setInitialCapital] = useState<number>(100000);
 
   const handleAlgorithmsChange = (newAlgorithms: Algorithm[]) => {
     setAlgorithms(newAlgorithms);

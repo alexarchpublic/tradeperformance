@@ -13,7 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
 interface TradeChartProps {
@@ -21,7 +21,11 @@ interface TradeChartProps {
     equityCurve: EquityCurvePoint[];
   };
   selectedMetrics: string[];
-  hoveredTradeIndex: number | null;
+}
+
+interface BrushDomain {
+  startIndex?: number;
+  endIndex?: number;
 }
 
 const METRIC_COLORS = {
@@ -36,7 +40,7 @@ const METRIC_LABELS = {
   drawdown: "Peak to Peak Drawdown (%)",
 };
 
-export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
+export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const [brushDomain, setBrushDomain] = useState<[Date, Date] | null>(null);
   const showPnLSubgraph = selectedMetrics.includes('equity') && selectedMetrics.includes('pnl');
 
@@ -90,7 +94,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const visibleData = getVisibleData();
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
 
-  const handleBrushChange = (domain: any) => {
+  const handleBrushChange = (domain: BrushDomain) => {
     if (!domain || (domain.startIndex === undefined && domain.endIndex === undefined)) {
       setBrushDomain(null);
       return;

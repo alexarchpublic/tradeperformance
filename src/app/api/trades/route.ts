@@ -10,6 +10,34 @@ const CAPITAL_REQUIREMENTS = {
   'mes_trades.csv': 10000,  // Gateway MES: $10k per unit
 };
 
+interface TradeData {
+  Entry_Date: string;
+  Exit_Date: string;
+  Entry_Price: number;
+  Exit_Price: number;
+  Contracts: number;
+  PnL: number;
+  'PnL_%': number;
+  'Peak_to_Peak_DD_%': number;
+  Duration_Hours: number;
+  Max_Favorable_Excursion: number;
+  Max_Adverse_Excursion: number;
+  Trade_Efficiency: number;
+  [key: string]: string | number;  // For other dynamic fields
+}
+
+interface EquityCurvePoint {
+  date: string;
+  equity: number;
+  pnl: number;
+  drawdown: number;
+}
+
+interface DrawdownPeriod {
+  duration: number;
+  drawdown: number;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const algorithmsJson = searchParams.get('algorithms');
@@ -182,21 +210,21 @@ export async function GET(request: Request) {
   }
 }
 
-function calculateSharpeRatio(trades: any[]): number {
+function calculateSharpeRatio(trades: TradeData[]): number {
   const returns = trades.map(t => t.PnL);
   const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
   const stdDev = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
   return stdDev === 0 ? 0 : (avgReturn / stdDev) * Math.sqrt(252); // Annualized
 }
 
-function calculateCalmarRatio(totalPnL: number, maxDrawdown: number, trades: any[]): number {
+function calculateCalmarRatio(totalPnL: number, maxDrawdown: number, trades: TradeData[]): number {
   if (maxDrawdown === 0) return 0;
   const tradingMonths = calculateTradingMonths(trades);
   const annualizedReturn = (totalPnL / tradingMonths) * 12;
   return annualizedReturn / maxDrawdown;
 }
 
-function calculateUlcerIndex(equityCurve: any[]): number {
+function calculateUlcerIndex(equityCurve: EquityCurvePoint[]): number {
   let maxEquity = equityCurve[0].equity;
   const drawdowns = equityCurve.map(point => {
     maxEquity = Math.max(maxEquity, point.equity);
@@ -206,52 +234,19 @@ function calculateUlcerIndex(equityCurve: any[]): number {
   return Math.sqrt(drawdowns.reduce((sum, d) => sum + d, 0) / drawdowns.length);
 }
 
-function calculateMaxDrawdownDuration(equityCurve: any[]): number {
-  let maxEquity = equityCurve[0].equity;
-  let drawdownStart: Date | null = null;
-  let maxDuration = 0;
-  let currentDuration = 0;
-
-  equityCurve.forEach(point => {
-    if (point.equity > maxEquity) {
-      maxEquity = point.equity;
-      drawdownStart = null;
-      currentDuration = 0;
-    } else if (point.equity < maxEquity) {
-      if (!drawdownStart) {
-        drawdownStart = new Date(point.date);
-      }
-      currentDuration = Math.ceil((new Date(point.date).getTime() - drawdownStart.getTime()) / (1000 * 60 * 60 * 24));
-      maxDuration = Math.max(maxDuration, currentDuration);
-    }
-  });
-
-  return maxDuration;
-}
-
-function calculateAvgProfitPerDay(trades: any[], totalPnL: number): number {
-  const tradingDays = calculateTradingDays(trades);
-  return tradingDays === 0 ? 0 : totalPnL / tradingDays;
-}
-
-function calculateAvgTradesPerDay(trades: any[]): number {
-  const tradingDays = calculateTradingDays(trades);
-  return tradingDays === 0 ? 0 : trades.length / tradingDays;
-}
-
-function calculateTradingDays(trades: any[]): number {
+function calculateTradingDays(trades: TradeData[]): number {
   if (trades.length === 0) return 0;
   const startDate = new Date(trades[0].Entry_Date);
   const endDate = new Date(trades[trades.length - 1].Exit_Date);
   return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function calculateTradingMonths(trades: any[]): number {
+function calculateTradingMonths(trades: TradeData[]): number {
   const tradingDays = calculateTradingDays(trades);
   return tradingDays / 30.44; // Average days per month
 }
 
-function calculateRecentMetrics(trades: any[], days: number) {
+function calculateRecentMetrics(trades: TradeData[], days: number) {
   if (trades.length === 0) return { profitFactor: 0, winRate: 0 };
 
   const endDate = new Date(trades[trades.length - 1].Exit_Date);
@@ -274,7 +269,7 @@ function calculateRecentMetrics(trades: any[], days: number) {
   return { profitFactor, winRate };
 }
 
-function calculateAnnualPnLPercent(trades: any[], totalPnL: number, initialCapital: number): number {
+function calculateAnnualPnLPercent(trades: TradeData[], totalPnL: number, initialCapital: number): number {
   if (trades.length === 0) return 0;
   
   const startDate = new Date(trades[0].Entry_Date);
@@ -287,13 +282,13 @@ function calculateAnnualPnLPercent(trades: any[], totalPnL: number, initialCapit
   return totalPnLPercent / yearFraction;
 }
 
-function calculateDrawdownStats(equityCurve: any[]) {
+function calculateDrawdownStats(equityCurve: EquityCurvePoint[]) {
   let maxEquity = equityCurve[0].equity;
   let drawdownStart: Date | null = null;
   let currentDrawdown = 0;
   let maxDuration = 0;
   let currentDuration = 0;
-  let drawdownPeriods: { duration: number, drawdown: number }[] = [];
+  const drawdownPeriods: DrawdownPeriod[] = [];
 
   equityCurve.forEach(point => {
     if (point.equity > maxEquity) {
