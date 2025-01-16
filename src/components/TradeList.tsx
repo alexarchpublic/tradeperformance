@@ -9,11 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trade } from "@/lib/utils/trade-data";
+import { type ProcessedTradeData, type Trade } from "@/lib/utils/trade-data";
 
 interface TradeListProps {
-  trades: Trade[];
+  data: ProcessedTradeData;
   onTradeHover: (index: number | null) => void;
+  hoveredTradeIndex: number | null;
 }
 
 const formatNumber = (value: number, decimals = 2) => {
@@ -40,15 +41,28 @@ const ALGORITHM_NAMES = {
   'mes_trades.csv': 'Gateway MES',
 };
 
-export function TradeList({ trades, onTradeHover }: TradeListProps) {
-  if (!trades?.length) return null;
+export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListProps) {
+  if (!data?.trades?.length) return null;
 
   const handleTradeHover = (index: number | null) => {
-    // Only trigger hover if index is within bounds
-    if (index === null || (index >= 0 && index < trades.length)) {
+    console.debug('Trade hover event:', {
+      index,
+      totalTrades: data.trades.length,
+      isValidIndex: index === null || (index >= 0 && index < data.trades.length)
+    });
+    
+    if (index === null || (index >= 0 && index < data.trades.length)) {
       onTradeHover(index);
+    } else {
+      console.warn('Invalid trade index:', index);
     }
   };
+
+  // Log component render
+  console.debug('TradeList render:', {
+    totalTrades: data.trades.length,
+    hoveredTradeIndex
+  });
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
@@ -70,7 +84,7 @@ export function TradeList({ trades, onTradeHover }: TradeListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {trades.map((trade, index) => (
+            {data.trades.map((trade: Trade, index: number) => (
               <TableRow
                 key={index}
                 onMouseEnter={() => handleTradeHover(index)}

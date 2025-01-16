@@ -45,13 +45,25 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const getVisibleData = () => {
     if (!brushDomain || brushDomain.startIndex === undefined || brushDomain.endIndex === undefined) {
+      console.debug('Using full data range:', { dataLength: data.equityCurve.length });
       return data.equityCurve;
     }
+    console.debug('Using brushed data range:', { 
+      start: brushDomain.startIndex, 
+      end: brushDomain.endIndex,
+      dataLength: data.equityCurve.length 
+    });
     return data.equityCurve.slice(brushDomain.startIndex, brushDomain.endIndex);
   };
 
   // Find the corresponding equity curve index for the hovered trade
   const findEquityCurveIndex = (tradeIndex: number | null) => {
+    console.debug('Finding equity curve index:', { 
+      tradeIndex,
+      equityCurveLength: data.equityCurve.length,
+      hasValidIndex: tradeIndex !== null && tradeIndex >= 0 && tradeIndex < data.equityCurve.length
+    });
+    
     if (tradeIndex === null || tradeIndex < 0 || !data.equityCurve[tradeIndex]) return null;
     return tradeIndex;
   };
@@ -100,14 +112,31 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const equityCurveIndex = findEquityCurveIndex(hoveredTradeIndex);
 
   const handleBrushChange = (newIndex: BrushStartEndIndex) => {
+    console.debug('Brush change event:', { 
+      newIndex,
+      currentDomain: brushDomain,
+      dataLength: data.equityCurve.length
+    });
+
     if (!newIndex || newIndex.startIndex === undefined || newIndex.endIndex === undefined) {
+      console.debug('Resetting brush domain to null');
       setBrushDomain(null);
       return;
     }
     
+    const boundedStart = Math.max(0, newIndex.startIndex);
+    const boundedEnd = Math.min(data.equityCurve.length, newIndex.endIndex);
+    
+    console.debug('Setting new brush domain:', {
+      originalStart: newIndex.startIndex,
+      originalEnd: newIndex.endIndex,
+      boundedStart,
+      boundedEnd
+    });
+
     setBrushDomain({
-      startIndex: Math.max(0, newIndex.startIndex),
-      endIndex: Math.min(data.equityCurve.length, newIndex.endIndex)
+      startIndex: boundedStart,
+      endIndex: boundedEnd
     });
   };
 
@@ -123,6 +152,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const formatPercent = (value: number) => {
     return `${value.toFixed(2)}%`;
   };
+
+  // Log component render state
+  console.debug('TradeChart render state:', {
+    hoveredTradeIndex,
+    equityCurveIndex,
+    visibleDataLength: visibleData.length,
+    totalDataLength: data.equityCurve.length,
+    selectedMetrics,
+    showPnLSubgraph
+  });
 
   return (
     <div className="w-full h-[600px]">
