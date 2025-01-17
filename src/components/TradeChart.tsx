@@ -123,10 +123,10 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const isPnLSelected = selectedMetrics.includes("pnl");
   const isDrawdownSelected = selectedMetrics.includes("drawdown");
 
-  // If user picks only "pnl", it goes to the main chart. Otherwise => subgraph
+  // If user picks only "pnl", it goes to the main chart
   const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
-  // Show subgraph for PnL if there's at least one other metric
-  const showPnLSubgraph = isPnLSelected && !onlyPnl;
+  // Show subgraph for PnL if PnL is selected AND at least one other metric is selected
+  const showPnLSubgraph = isPnLSelected && (isEquitySelected || isDrawdownSelected);
 
   // Calculate domains for the main chart & subgraph
   function calculateDomains() {
