@@ -21,14 +21,12 @@ export function RangeSlider({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; range: [number, number] } | null>(null);
   
-  // Calculate the current window size
   const windowSize = value[1] - value[0];
 
   const handleZoomChange = (newRange: [number, number]) => {
     onChange(newRange);
   };
 
-  // Handle dragging the window
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target instanceof Element && e.target.closest('.slider-track')) {
       setIsDragging(true);
@@ -70,6 +68,11 @@ export function RangeSlider({
     setDragStart(null);
   };
 
+  // Calculate positions for handles and selection
+  const leftPosition = ((value[0] - min) / (max - min)) * 100;
+  const rightPosition = ((value[1] - min) / (max - min)) * 100;
+  const width = rightPosition - leftPosition;
+
   return (
     <div 
       className={`px-4 slider-container ${className}`}
@@ -79,15 +82,26 @@ export function RangeSlider({
       onMouseLeave={handleMouseUp}
     >
       <div 
-        className={`w-full h-2 bg-gray-200 rounded-full mb-2 slider-track
-          ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className="relative w-full h-2 bg-gray-200 rounded-full slider-track"
       >
+        {/* Selection area */}
         <div
-          className="h-full bg-blue-500 rounded-full transition-all duration-150"
+          className={`absolute h-full bg-blue-500 rounded-full transition-all duration-150
+            ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           style={{
-            width: `${((value[1] - value[0]) / (max - min)) * 100}%`,
-            marginLeft: `${((value[0] - min) / (max - min)) * 100}%`
+            left: `${leftPosition}%`,
+            width: `${width}%`
           }}
+        />
+        {/* Left handle */}
+        <div
+          className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          style={{ left: `${leftPosition}%` }}
+        />
+        {/* Right handle */}
+        <div
+          className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          style={{ left: `${rightPosition}%` }}
         />
       </div>
       <Slider
@@ -96,7 +110,7 @@ export function RangeSlider({
         step={step}
         value={value}
         onValueChange={handleZoomChange}
-        className="w-full"
+        className="w-full absolute top-0 opacity-0"
       />
     </div>
   );
