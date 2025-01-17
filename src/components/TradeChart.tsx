@@ -8,10 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from "recharts";
 import { format } from "date-fns";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 import { RangeSlider } from "@/components/ui/range-slider";
 
@@ -20,7 +19,6 @@ interface TradeChartProps {
     equityCurve: EquityCurvePoint[];
   };
   selectedMetrics: string[];
-  hoveredTradeIndex: number | null;
 }
 
 type DateRange = {
@@ -46,7 +44,7 @@ const METRIC_COLORS = {
   drawdown: "#ef4444",
 };
 
-export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
+export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 100]);
 
