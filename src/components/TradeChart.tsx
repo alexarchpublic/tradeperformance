@@ -64,18 +64,24 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   // When brush changes, update our dateRange state
   const handleBrushChange = (range: BrushRange) => {
-    if (
-      !range ||
-      typeof range.startIndex !== "number" ||
-      typeof range.endIndex !== "number"
-    ) {
-      // If the brush range is invalid, reset or ignore
-      setDateRange(null);
+    // Ensure range exists and has valid indices
+    if (!range || range.startIndex === undefined || range.endIndex === undefined) {
       return;
     }
-    // Use the FULL dataset (data.equityCurve) to find the date bounds:
-    const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
+
+    // Ensure indices are within valid bounds
+    const maxIndex = data.equityCurve.length - 1;
+    const validStartIndex = Math.max(0, Math.min(range.startIndex, maxIndex));
+    const validEndIndex = Math.max(0, Math.min(range.endIndex, maxIndex));
+
+    // Ensure we have a valid range (at least one point difference)
+    if (validStartIndex === validEndIndex) {
+      return;
+    }
+
+    const startDate = new Date(data.equityCurve[validStartIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[validEndIndex].date).getTime();
+
     setDateRange({ start: startDate, end: endDate });
   };
 
@@ -271,8 +277,11 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   alwaysShowText
                   onChange={handleBrushChange}
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
-                  startIndex={0}
-                  endIndex={data.equityCurve.length - 1}
+                  data={data.equityCurve}
+                  x={0}
+                  y={0}
+                  startIndex={dateRange ? undefined : 0}
+                  endIndex={dateRange ? undefined : data.equityCurve.length - 1}
                 />
               </LineChart>
             </ResponsiveContainer>
