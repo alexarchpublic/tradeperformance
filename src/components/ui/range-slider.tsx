@@ -19,37 +19,46 @@ export function RangeSlider({
   className = ''
 }: RangeSliderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; range: [number, number] } | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; range: [number, number]; handle?: 'left' | 'right' } | null>(null);
   
   const windowSize = value[1] - value[0];
 
-  const handleZoomChange = (newRange: [number, number]) => {
-    onChange(newRange);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target instanceof Element && e.target.closest('.slider-track')) {
+  const handleMouseDown = (e: React.MouseEvent, handle?: 'left' | 'right') => {
+    const target = e.target as Element;
+    if (target.closest('.handle') || target.closest('.slider-track')) {
       setIsDragging(true);
       setDragStart({
         x: e.clientX,
-        range: [...value] as [number, number]
+        range: [...value] as [number, number],
+        handle
       });
+      e.stopPropagation();
     }
   };
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging && dragStart && e.target instanceof Element) {
-      const container = e.target.closest('.slider-container');
-      if (!container) return;
+    if (!isDragging || !dragStart) return;
 
-      const dx = e.clientX - dragStart.x;
-      const rangePerPixel = (max - min) / container.clientWidth;
-      const rangeDelta = dx * rangePerPixel;
-      
+    const container = (e.target as Element).closest('.slider-container');
+    if (!container) return;
+
+    const dx = e.clientX - dragStart.x;
+    const rangePerPixel = (max - min) / container.clientWidth;
+    const rangeDelta = dx * rangePerPixel;
+
+    if (dragStart.handle === 'left') {
+      // Moving left handle
+      let newStart = Math.max(min, Math.min(dragStart.range[0] + rangeDelta, value[1] - step));
+      onChange([newStart, value[1]]);
+    } else if (dragStart.handle === 'right') {
+      // Moving right handle
+      let newEnd = Math.max(value[0] + step, Math.min(dragStart.range[1] + rangeDelta, max));
+      onChange([value[0], newEnd]);
+    } else {
+      // Panning the entire range
       let newStart = dragStart.range[0] + rangeDelta;
       let newEnd = dragStart.range[1] + rangeDelta;
       
-      // Prevent dragging beyond bounds
       if (newStart < min) {
         newStart = min;
         newEnd = min + windowSize;
@@ -61,7 +70,7 @@ export function RangeSlider({
       
       onChange([newStart, newEnd]);
     }
-  }, [isDragging, dragStart, windowSize, min, max, onChange]);
+  }, [isDragging, dragStart, min, max, step, windowSize, value, onChange]);
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -76,13 +85,13 @@ export function RangeSlider({
   return (
     <div 
       className={`px-4 slider-container ${className}`}
-      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       <div 
         className="relative w-full h-2 bg-gray-200 rounded-full slider-track"
+        onMouseDown={(e) => handleMouseDown(e)}
       >
         {/* Selection area */}
         <div
@@ -95,23 +104,17 @@ export function RangeSlider({
         />
         {/* Left handle */}
         <div
-          className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4 hover:scale-110 transition-transform"
           style={{ left: `${leftPosition}%` }}
+          onMouseDown={(e) => handleMouseDown(e, 'left')}
         />
         {/* Right handle */}
         <div
-          className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4 hover:scale-110 transition-transform"
           style={{ left: `${rightPosition}%` }}
+          onMouseDown={(e) => handleMouseDown(e, 'right')}
         />
       </div>
-      <Slider
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onValueChange={handleZoomChange}
-        className="w-full absolute top-0 opacity-0"
-      />
     </div>
   );
 } 
