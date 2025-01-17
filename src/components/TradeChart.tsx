@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
@@ -80,7 +81,7 @@ function CustomMainTooltip({
     <div className="bg-white p-2 rounded shadow text-xs text-gray-700">
       {label && (
         <div className="font-semibold border-b pb-1">
-          {format(new Date(label), "MMM d, yyyy HH:mm")}
+          {format(new Date(label), "MMM d, yyyy")}
         </div>
       )}
       {equityItem && (
@@ -288,6 +289,17 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 isAnimationActive={false}
               />
             )}
+
+            {/* Add zero reference line when PnL is shown in main chart */}
+            {(onlyPnl || showPnLSubgraph) && (
+              <ReferenceLine
+                y={0}
+                yAxisId="dollar"
+                stroke="#666"
+                strokeDasharray="3 3"
+                opacity={0.5}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -326,6 +338,14 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   offset: -50,
                   style: { textAnchor: "middle", fontSize: 12 },
                 }}
+              />
+              {/* Add zero reference line for PnL subgraph */}
+              <ReferenceLine
+                y={0}
+                yAxisId="pnl"
+                stroke="#666"
+                strokeDasharray="3 3"
+                opacity={0.5}
               />
               {/* Add invisible right axis when drawdown is enabled to match main chart width */}
               {isDrawdownSelected && (
