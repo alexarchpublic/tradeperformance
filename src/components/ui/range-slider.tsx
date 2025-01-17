@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 
 interface RangeSliderProps {
   value: [number, number];
@@ -17,7 +17,6 @@ export function RangeSlider({
   step = 0.1,
   className = ''
 }: RangeSliderProps) {
-  // Use refs instead of state for drag tracking to avoid re-renders
   const dragRef = useRef<{
     active: boolean;
     startX: number;
@@ -33,27 +32,7 @@ export function RangeSlider({
   
   const windowSize = value[1] - value[0];
 
-  const handleMouseDown = (e: React.MouseEvent, handle?: 'left' | 'right') => {
-    const target = e.target as Element;
-    if (target.closest('.handle') || target.closest('.slider-track')) {
-      const container = target.closest('.slider-container');
-      if (!container) return;
-
-      // Pre-calculate values needed for drag operations
-      dragRef.current = {
-        active: true,
-        startX: e.clientX,
-        range: [...value] as [number, number],
-        handle,
-        containerWidth: container.clientWidth,
-        rangePerPixel: (max - min) / container.clientWidth
-      };
-      
-      e.stopPropagation();
-    }
-  };
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     const drag = dragRef.current;
     if (!drag.active || !drag.containerWidth || !drag.rangePerPixel) return;
 
@@ -61,15 +40,12 @@ export function RangeSlider({
     const rangeDelta = dx * drag.rangePerPixel;
 
     if (drag.handle === 'left') {
-      // Moving left handle
       const newStart = Math.max(min, Math.min(drag.range[0] + rangeDelta, value[1] - step));
       onChange([newStart, value[1]]);
     } else if (drag.handle === 'right') {
-      // Moving right handle
       const newEnd = Math.max(value[0] + step, Math.min(drag.range[1] + rangeDelta, max));
       onChange([value[0], newEnd]);
     } else {
-      // Panning the entire range
       let newStart = drag.range[0] + rangeDelta;
       let newEnd = drag.range[1] + rangeDelta;
       
@@ -87,10 +63,50 @@ export function RangeSlider({
   }, [min, max, step, windowSize, value, onChange]);
 
   const handleMouseUp = useCallback(() => {
-    dragRef.current.active = false;
-  }, []);
+    if (dragRef.current.active) {
+      dragRef.current.active = false;
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+  }, [handleMouseMove]);
 
-  // Calculate positions for handles and selection
+  const handleMouseDown = (e: React.MouseEvent, handle?: 'left' | 'right') => {
+    const target = e.target as Element;
+    if (target.closest('.handle') || target.closest('.slider-track')) {
+      const container = target.closest('.slider-container');
+      if (!container) return;
+
+      // Prevent text selection during drag
+      document.body.style.userSelect = 'none';
+
+      dragRef.current = {
+        active: true,
+        startX: e.clientX,
+        range: [...value] as [number, number],
+        handle,
+        containerWidth: container.clientWidth,
+        rangePerPixel: (max - min) / container.clientWidth
+      };
+
+      // Add window-level event listeners
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
+
+  // Cleanup event listeners on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
   const leftPosition = ((value[0] - min) / (max - min)) * 100;
   const rightPosition = ((value[1] - min) / (max - min)) * 100;
   const width = rightPosition - leftPosition;
@@ -98,15 +114,11 @@ export function RangeSlider({
   return (
     <div 
       className={`px-4 slider-container ${className}`}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
       <div 
         className="relative w-full h-2 bg-gray-200 rounded-full slider-track"
         onMouseDown={(e) => handleMouseDown(e)}
       >
-        {/* Selection area */}
         <div
           className={`absolute h-full bg-blue-500 rounded-full
             ${dragRef.current.active ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -116,7 +128,6 @@ export function RangeSlider({
             willChange: 'left, width'
           }}
         />
-        {/* Left handle */}
         <div
           className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
           style={{ 
@@ -125,7 +136,6 @@ export function RangeSlider({
           }}
           onMouseDown={(e) => handleMouseDown(e, 'left')}
         />
-        {/* Right handle */}
         <div
           className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
           style={{ 
