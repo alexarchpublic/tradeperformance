@@ -26,7 +26,7 @@ export function RangeSlider({
   } | null>(null);
 
   const handlePanStart = (e: React.MouseEvent) => {
-    // Only start panning if clicking the range (blue area)
+    // Only start panning if clicking the range (blue area) or track
     const target = e.target as Element;
     if (!target.classList.contains('pan-handle')) return;
 
@@ -40,13 +40,15 @@ export function RangeSlider({
     document.body.style.userSelect = 'none';
     
     e.preventDefault();
+    e.stopPropagation();
   };
 
   const handlePanMove = (e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
 
     const dx = e.clientX - dragRef.current.startX;
-    const containerWidth = (e.target as Element)?.closest('.slider-container')?.clientWidth || 1;
+    const sliderContainer = document.querySelector('.slider-container');
+    const containerWidth = sliderContainer?.clientWidth || 1;
     const rangeSize = value[1] - value[0];
     const pixelsPerUnit = containerWidth / (max - min);
     const deltaUnits = dx / pixelsPerUnit;
@@ -88,7 +90,7 @@ export function RangeSlider({
   }, [isDragging]);
 
   return (
-    <div className={cn("px-4 slider-container", className)}>
+    <div className={cn("px-4 slider-container relative", className)}>
       <SliderPrimitive.Root
         className="relative flex w-full touch-none select-none items-center"
         value={value}
@@ -100,26 +102,30 @@ export function RangeSlider({
       >
         <SliderPrimitive.Track className="relative h-2 w-full grow rounded-full bg-gray-200">
           <SliderPrimitive.Range className="absolute h-full rounded-full bg-blue-500" />
-          {/* Draggable overlay for panning */}
-          <div
-            className={cn(
-              "pan-handle absolute h-full rounded-full bg-transparent",
-              isDragging ? "cursor-grabbing" : "cursor-grab"
-            )}
-            style={{
-              left: `${((value[0] - min) / (max - min)) * 100}%`,
-              width: `${((value[1] - value[0]) / (max - min)) * 100}%`,
-              zIndex: 1
-            }}
-            onMouseDown={handlePanStart}
-          />
         </SliderPrimitive.Track>
+        {/* Draggable overlay for panning - positioned above track but below thumbs */}
+        <div
+          className={cn(
+            "pan-handle absolute h-2 w-full rounded-full bg-transparent",
+            isDragging ? "cursor-grabbing" : "cursor-grab"
+          )}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 20
+          }}
+          onMouseDown={handlePanStart}
+        />
         <SliderPrimitive.Thumb
           className="block h-4 w-4 rounded-full border-2 border-blue-500 bg-white focus:outline-none focus-visible:ring focus-visible:ring-blue-500 focus-visible:ring-opacity-75 disabled:pointer-events-none disabled:opacity-50"
+          style={{ zIndex: 30 }}
           aria-label="Left handle"
         />
         <SliderPrimitive.Thumb
           className="block h-4 w-4 rounded-full border-2 border-blue-500 bg-white focus:outline-none focus-visible:ring focus-visible:ring-blue-500 focus-visible:ring-opacity-75 disabled:pointer-events-none disabled:opacity-50"
+          style={{ zIndex: 30 }}
           aria-label="Right handle"
         />
       </SliderPrimitive.Root>
