@@ -298,7 +298,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               />
               <YAxis
                 tickFormatter={formatDollar}
-                domain={[0, "auto"] /* We'll override with the actual PnL domain below */}
+                domain={pnlDomain}
                 tick={{ fontSize: 12 }}
                 label={{
                   value: "Trade P&L ($)",
