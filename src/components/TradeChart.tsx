@@ -115,6 +115,11 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     data.equityCurve.length - 1,
   ]);
 
+  // Reset range values when data changes (e.g., start date changes)
+  useEffect(() => {
+    setRangeValues([0, data.equityCurve.length - 1]);
+  }, [data.equityCurve.length]);
+
   // Slice the equityCurve based on the selected slider range
   const visibleData = useMemo(() => {
     const [startIdx, endIdx] = rangeValues;
