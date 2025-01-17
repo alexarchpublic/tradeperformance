@@ -180,14 +180,14 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
 
   return (
-    <div className="w-full h-[600px] flex flex-col space-y-2">
-
-      {/* 1) Main chart (and optional drawdown axis) */}
-      <div className="flex-1">
+    <div className="w-full h-[600px] flex flex-col">
+      {/* Main chart container - adjust height based on subgraph presence */}
+      <div className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={visibleData}
             margin={getChartMargins(isDrawdownSelected, false)}
+            syncId="trading-charts"
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
@@ -195,12 +195,19 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
               tick={{ fontSize: 12 }}
               padding={{ left: 20, right: 20 }}
+              hide={showPnLSubgraph}
             />
             <YAxis
               yAxisId="dollar"
               orientation="left"
               domain={dollarDomain}
               tick={{ fontSize: 12 }}
+              tickFormatter={(value) => new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(value)}
               label={{
                 value: onlyPnl ? "Trade P&L ($)" : "Account Value ($)",
                 angle: -90,
@@ -215,6 +222,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 orientation="right"
                 domain={drawdownDomain}
                 tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
                 label={{
                   value: "Peak to Peak Drawdown (%)",
                   angle: 90,
@@ -225,10 +233,9 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* Single main tooltip, including PnL data even if on subgraph */}
             <Tooltip content={<CustomMainTooltip />} />
 
-            {/* Equity line */}
+            {/* Chart lines remain the same */}
             {isEquitySelected && (
               <Line
                 type="stepAfter"
@@ -242,7 +249,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* Drawdown line */}
             {isDrawdownSelected && (
               <Line
                 type="monotone"
@@ -256,7 +262,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* If user picks only "pnl" => main chart line */}
             {onlyPnl && (
               <Line
                 type="stepAfter"
@@ -270,7 +275,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* If user picks PnL + other => invisible "pnl" line so tooltip includes PnL */}
             {showPnLSubgraph && (
               <Line
                 type="stepAfter"
@@ -287,13 +291,14 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* 2) Subgraph for PnL if multiple metrics are selected (no tooltip) */}
+      {/* PnL Subgraph */}
       {showPnLSubgraph && (
-        <div className="h-40">
+        <div className="h-[25%] mb-2">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={visibleData}
               margin={getChartMargins(isDrawdownSelected, true)}
+              syncId="trading-charts"
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
@@ -305,6 +310,12 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               <YAxis
                 domain={pnlDomain}
                 tick={{ fontSize: 12 }}
+                tickFormatter={(value) => new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(value)}
                 label={{
                   value: "Trade P&L ($)",
                   angle: -90,
@@ -313,7 +324,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   style: { textAnchor: "middle", fontSize: 12 },
                 }}
               />
-              {/* No tooltip => rely on the main chart for PnL data */}
+              <Tooltip content={() => null} />
               <Line
                 type="stepAfter"
                 dataKey="pnl"
@@ -328,14 +339,16 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
         </div>
       )}
 
-      {/* 3) The Range Slider => moved below the charts */}
-      <RangeSlider
-        value={rangeValues}
-        onChange={setRangeValues}
-        min={0}
-        max={data.equityCurve.length - 1}
-        step={1}
-      />
+      {/* Range Slider */}
+      <div className="h-[5%]">
+        <RangeSlider
+          value={rangeValues}
+          onChange={setRangeValues}
+          min={0}
+          max={data.equityCurve.length - 1}
+          step={1}
+        />
+      </div>
     </div>
   );
 }
