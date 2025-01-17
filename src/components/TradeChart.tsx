@@ -41,9 +41,17 @@ const METRIC_COLORS = {
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
 
-  // If both equity and pnl are selected, show the PnL subgraph
-  const showPnLSubgraph = selectedMetrics.includes("equity") && selectedMetrics.includes("pnl");
+  // Helpers to determine which metrics are selected
+  const isEquitySelected = selectedMetrics.includes("equity");
+  const isPnLSelected = selectedMetrics.includes("pnl");
+  const isDrawdownSelected = selectedMetrics.includes("drawdown");
 
+  // If PnL is selected alone, show PnL on the main chart.
+  // If PnL is selected with any other metric(s), show it on a subgraph.
+  const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
+  const showPnLSubgraph = isPnLSelected && !onlyPnl; // means PnL + at least one other metric
+
+  // Filter the data by the current dateRange
   const getVisibleData = () => {
     if (!dateRange || !data.equityCurve.length) {
       return data.equityCurve;
@@ -54,9 +62,10 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
+  // Called whenever the user drags/zooms the brush
   const handleBrushChange = (range: BrushRange) => {
+    if (!range) return;
     if (
-      !range ||
       typeof range.startIndex !== "number" ||
       typeof range.endIndex !== "number"
     ) {
@@ -82,37 +91,39 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     const pnlValues = visibleData.map((d) => d.pnl);
     const drawdownValues = visibleData.map((d) => d.drawdown);
 
+    // Equity domain
     const maxEquity = Math.max(...equityValues);
     const minEquity = Math.min(...equityValues);
     const equityPadding = (maxEquity - minEquity) * 0.1;
 
+    // PnL domain
     const maxPnL = Math.max(...pnlValues, 0);
     const minPnL = Math.min(...pnlValues, 0);
     const pnlPadding = (maxPnL - minPnL) * 0.1;
 
+    // Drawdown domain
     const minDrawdown = Math.min(...drawdownValues);
     const drawdownPadding = Math.abs(minDrawdown) * 0.1;
 
+    // Decide the main chart's dollar-domain logic:
     let dollarMin: number;
     let dollarMax: number;
-    if (selectedMetrics.includes("equity") && !selectedMetrics.includes("pnl")) {
-      dollarMin = minEquity - equityPadding;
-      dollarMax = maxEquity + equityPadding;
-    } else if (!selectedMetrics.includes("equity") && selectedMetrics.includes("pnl")) {
+
+    if (onlyPnl) {
+      // Only PnL is selected => main chart should display PnL on dollar axis
       dollarMin = minPnL - pnlPadding;
       dollarMax = maxPnL + pnlPadding;
-    } else if (
-      selectedMetrics.includes("equity") &&
-      selectedMetrics.includes("pnl") &&
-      !showPnLSubgraph
-    ) {
-      // Both selected but no subgraph => combine them on one scale
-      dollarMin = Math.min(minEquity - equityPadding, minPnL - pnlPadding);
-      dollarMax = Math.max(maxEquity + equityPadding, maxPnL + pnlPadding);
-    } else {
-      // Default to equity domain
+    } else if (isEquitySelected) {
+      // Equity is selected (and not "only PnL"), so use equity domain
       dollarMin = minEquity - equityPadding;
       dollarMax = maxEquity + equityPadding;
+    } else {
+      // If we don't have equity or only have drawdown or a combination
+      // like PnL + drawdown but not alone => PnL subgraph
+      // The main chart has no dollar-based lines except equity (not selected),
+      // so let's default the main chart's dollar axis to [0,0].
+      dollarMin = 0;
+      dollarMax = 0;
     }
 
     return {
@@ -125,6 +136,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const visibleData = getVisibleData();
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
 
+  // Formatters
   const formatDollar = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -144,13 +156,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     visibleDataLength: visibleData.length,
     totalDataLength: data.equityCurve.length,
     selectedMetrics,
+    onlyPnl,
     showPnLSubgraph,
   });
 
   return (
     <div className="w-full h-[600px] flex flex-col">
-      {/* Main chart (equity & drawdown) fills most of the space */}
-      <div className={showPnLSubgraph ? "flex-1" : "flex-1"}>
+      {/* MAIN CHART */}
+      <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={visibleData}
@@ -177,7 +190,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 style: { textAnchor: "middle", fontSize: 12 },
               }}
             />
-            {selectedMetrics.includes("drawdown") && (
+            {isDrawdownSelected && (
               <YAxis
                 yAxisId="drawdown"
                 orientation="right"
@@ -205,7 +218,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 format(new Date(label), "MMM d, yyyy HH:mm")
               }
             />
-            {selectedMetrics.includes("equity") && (
+
+            {/* EQUITY line */}
+            {isEquitySelected && (
               <Line
                 type="stepAfter"
                 dataKey="equity"
@@ -218,7 +233,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 isAnimationActive={false}
               />
             )}
-            {selectedMetrics.includes("drawdown") && (
+
+            {/* DRAWDOWN line */}
+            {isDrawdownSelected && (
               <Line
                 type="monotone"
                 dataKey="drawdown"
@@ -231,6 +248,22 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 isAnimationActive={false}
               />
             )}
+
+            {/* PNL line on main chart ONLY if it's the only metric selected */}
+            {onlyPnl && (
+              <Line
+                type="stepAfter"
+                dataKey="pnl"
+                name="P&L"
+                stroke={METRIC_COLORS.pnl}
+                yAxisId="dollar"
+                dot={false}
+                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
+
             <Brush
               dataKey="date"
               height={40}
@@ -240,15 +273,17 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               alwaysShowText
               onChange={handleBrushChange}
               tickFormatter={(date) => format(new Date(date), "MMM d")}
-              // No startIndex or endIndex => user can now drag
+              // Provide valid start/end so the brush handles are draggable
+              startIndex={0}
+              endIndex={data.equityCurve.length - 1}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* If both equity and PnL are selected, show smaller subgraph for PnL */}
+      {/* SUBGRAPH for PnL if it's selected + any other metric */}
       {showPnLSubgraph && (
-        <div className="h-40"> 
+        <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={visibleData}
@@ -263,7 +298,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               />
               <YAxis
                 tickFormatter={formatDollar}
-                domain={pnlDomain}
+                domain={[0, "auto"] /* We'll override with the actual PnL domain below */}
                 tick={{ fontSize: 12 }}
                 label={{
                   value: "Trade P&L ($)",
@@ -296,4 +331,4 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       )}
     </div>
   );
-} 
+}
