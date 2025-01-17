@@ -300,6 +300,13 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 style: { textAnchor: "middle", fontSize: 12 },
               }}
             />
+            {showPnLSubgraph && (
+              <YAxis
+                yAxisId="pnlHidden"
+                domain={[0, 0]}
+                hide={true}
+              />
+            )}
             {isDrawdownSelected && (
               <YAxis
                 yAxisId="drawdown"
@@ -333,15 +340,14 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {isDrawdownSelected && (
+            {showPnLSubgraph && (
               <Line
-                type="monotone"
-                dataKey="drawdown"
-                name="Peak to Peak Drawdown"
-                stroke={METRIC_COLORS.drawdown}
-                yAxisId="drawdown"
+                dataKey="pnl"
+                name="P&L"
+                yAxisId="pnlHidden"
+                stroke="transparent"
+                strokeWidth={0}
                 dot={false}
-                strokeWidth={2}
                 isAnimationActive={false}
               />
             )}
