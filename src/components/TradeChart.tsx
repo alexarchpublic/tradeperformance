@@ -49,7 +49,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   // If PnL is selected alone, show PnL on the main chart.
   // If PnL is selected with any other metric(s), show it on a subgraph.
   const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
-  const showPnLSubgraph = isPnLSelected && !onlyPnl; // means PnL + at least one other metric
+  const showPnLSubgraph = isPnLSelected && selectedMetrics.length > 1;
 
   // Filter the data by the current dateRange
   const getVisibleData = () => {
@@ -64,16 +64,27 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   // Called whenever the user drags/zooms the brush
   const handleBrushChange = (range: BrushRange) => {
-    if (!range) return;
-    if (
-      typeof range.startIndex !== "number" ||
-      typeof range.endIndex !== "number"
-    ) {
+    // If range is null or undefined, reset the zoom
+    if (!range) {
+      setDateRange(null);
       return;
     }
-    const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
-    setDateRange({ start: startDate, end: endDate });
+
+    // Ensure we have valid indices
+    if (typeof range.startIndex !== "number" || typeof range.endIndex !== "number") {
+      return;
+    }
+
+    // Ensure indices are within bounds
+    const startIndex = Math.max(0, Math.min(range.startIndex, data.equityCurve.length - 1));
+    const endIndex = Math.max(startIndex, Math.min(range.endIndex, data.equityCurve.length - 1));
+
+    // Only update if we have valid indices and they're different
+    if (startIndex !== endIndex) {
+      const startDate = new Date(data.equityCurve[startIndex].date).getTime();
+      const endDate = new Date(data.equityCurve[endIndex].date).getTime();
+      setDateRange({ start: startDate, end: endDate });
+    }
   };
 
   // Compute Y-axis domains
