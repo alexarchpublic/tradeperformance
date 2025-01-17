@@ -27,9 +27,13 @@ type DateRange = {
   end: number;
 } | null;
 
-interface BrushRange {
-  startIndex?: number;
-  endIndex?: number;
+// Add type for chart mouse events
+interface ChartMouseEvent {
+  activeLabel?: string;
+  activePayload?: Array<{
+    value: number;
+    payload: EquityCurvePoint;
+  }>;
 }
 
 const METRIC_COLORS = {
@@ -66,14 +70,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
-  const handleMouseDown = (e: any) => {
-    if (!e || !e.activeLabel) return;
+  const handleMouseDown = (e: ChartMouseEvent) => {
+    if (!e?.activeLabel) return;
     setZoomArea({ start: e.activeLabel, end: null });
   };
 
-  const handleMouseMove = (e: any) => {
-    if (!e || !e.activeLabel || !zoomArea.start) return;
-    setZoomArea(prev => ({ ...prev, end: e.activeLabel }));
+  const handleMouseMove = (e: ChartMouseEvent) => {
+    if (!e?.activeLabel || !zoomArea.start) return;
+    setZoomArea(prev => ({ ...prev, end: e.activeLabel || null }));
   };
 
   const handleMouseUp = () => {
