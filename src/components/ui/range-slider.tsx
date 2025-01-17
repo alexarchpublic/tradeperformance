@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 
 interface RangeSliderProps {
   value: [number, number];
@@ -17,46 +17,61 @@ export function RangeSlider({
   step = 0.1,
   className = ''
 }: RangeSliderProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; range: [number, number]; handle?: 'left' | 'right' } | null>(null);
+  // Use refs instead of state for drag tracking to avoid re-renders
+  const dragRef = useRef<{
+    active: boolean;
+    startX: number;
+    range: [number, number];
+    handle?: 'left' | 'right';
+    containerWidth?: number;
+    rangePerPixel?: number;
+  }>({
+    active: false,
+    startX: 0,
+    range: [0, 0]
+  });
   
   const windowSize = value[1] - value[0];
 
   const handleMouseDown = (e: React.MouseEvent, handle?: 'left' | 'right') => {
     const target = e.target as Element;
     if (target.closest('.handle') || target.closest('.slider-track')) {
-      setIsDragging(true);
-      setDragStart({
-        x: e.clientX,
+      const container = target.closest('.slider-container');
+      if (!container) return;
+
+      // Pre-calculate values needed for drag operations
+      dragRef.current = {
+        active: true,
+        startX: e.clientX,
         range: [...value] as [number, number],
-        handle
-      });
+        handle,
+        containerWidth: container.clientWidth,
+        rangePerPixel: (max - min) / container.clientWidth
+      };
+      
       e.stopPropagation();
     }
   };
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !dragStart) return;
+    const drag = dragRef.current;
+    if (!drag.active || !drag.containerWidth || !drag.rangePerPixel) return;
 
-    const container = (e.target as Element).closest('.slider-container');
-    if (!container) return;
+    const dx = e.clientX - drag.startX;
+    const rangeDelta = dx * drag.rangePerPixel;
 
-    const dx = e.clientX - dragStart.x;
-    const rangePerPixel = (max - min) / container.clientWidth;
-    const rangeDelta = dx * rangePerPixel;
-
-    if (dragStart.handle === 'left') {
+    if (drag.handle === 'left') {
       // Moving left handle
-      const newStart = Math.max(min, Math.min(dragStart.range[0] + rangeDelta, value[1] - step));
+      const newStart = Math.max(min, Math.min(drag.range[0] + rangeDelta, value[1] - step));
       onChange([newStart, value[1]]);
-    } else if (dragStart.handle === 'right') {
+    } else if (drag.handle === 'right') {
       // Moving right handle
-      const newEnd = Math.max(value[0] + step, Math.min(dragStart.range[1] + rangeDelta, max));
+      const newEnd = Math.max(value[0] + step, Math.min(drag.range[1] + rangeDelta, max));
       onChange([value[0], newEnd]);
     } else {
       // Panning the entire range
-      let newStart = dragStart.range[0] + rangeDelta;
-      let newEnd = dragStart.range[1] + rangeDelta;
+      let newStart = drag.range[0] + rangeDelta;
+      let newEnd = drag.range[1] + rangeDelta;
       
       if (newStart < min) {
         newStart = min;
@@ -69,12 +84,11 @@ export function RangeSlider({
       
       onChange([newStart, newEnd]);
     }
-  }, [isDragging, dragStart, min, max, step, windowSize, value, onChange]);
+  }, [min, max, step, windowSize, value, onChange]);
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setDragStart(null);
-  };
+  const handleMouseUp = useCallback(() => {
+    dragRef.current.active = false;
+  }, []);
 
   // Calculate positions for handles and selection
   const leftPosition = ((value[0] - min) / (max - min)) * 100;
@@ -94,23 +108,30 @@ export function RangeSlider({
       >
         {/* Selection area */}
         <div
-          className={`absolute h-full bg-blue-500 rounded-full transition-all duration-150
-            ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`absolute h-full bg-blue-500 rounded-full
+            ${dragRef.current.active ? 'cursor-grabbing' : 'cursor-grab'}`}
           style={{
             left: `${leftPosition}%`,
-            width: `${width}%`
+            width: `${width}%`,
+            willChange: 'left, width'
           }}
         />
         {/* Left handle */}
         <div
-          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4 hover:scale-110 transition-transform"
-          style={{ left: `${leftPosition}%` }}
+          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          style={{ 
+            left: `${leftPosition}%`,
+            willChange: 'left'
+          }}
           onMouseDown={(e) => handleMouseDown(e, 'left')}
         />
         {/* Right handle */}
         <div
-          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4 hover:scale-110 transition-transform"
-          style={{ left: `${rightPosition}%` }}
+          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
+          style={{ 
+            left: `${rightPosition}%`,
+            willChange: 'left'
+          }}
           onMouseDown={(e) => handleMouseDown(e, 'right')}
         />
       </div>
