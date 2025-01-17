@@ -32,7 +32,6 @@ interface BrushRange {
   endIndex?: number;
 }
 
-// Colors for each metric
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -49,6 +48,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   // Decide if PnL is on the main chart or subgraph
   const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
+  // Show subgraph if PnL + (equity or drawdown) => i.e. PnL plus at least one more metric
   const showPnLSubgraph = isPnLSelected && selectedMetrics.length > 1;
 
   // Filter data by current dateRange for the chart lines
@@ -69,10 +69,11 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       typeof range.startIndex !== "number" ||
       typeof range.endIndex !== "number"
     ) {
+      // If the brush range is invalid, reset or ignore
       setDateRange(null);
       return;
     }
-    // Use the full data set here (data.equityCurve), not visibleData
+    // Use the FULL dataset (data.equityCurve) to find the date bounds:
     const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
     const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
     setDateRange({ start: startDate, end: endDate });
@@ -112,11 +113,11 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       dollarMin = minPnL - pnlPadding;
       dollarMax = maxPnL + pnlPadding;
     } else if (isEquitySelected) {
-      // Equity is included => main chart uses equity domain
+      // Equity => main chart uses equity domain
       dollarMin = minEquity - equityPadding;
       dollarMax = maxEquity + equityPadding;
     } else {
-      // e.g. drawdown (without equity) => no meaningful $ metric to show
+      // e.g. drawdown only => no meaningful $ metric to show
       dollarMin = 0;
       dollarMax = 0;
     }
@@ -150,15 +151,15 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     selectedMetrics,
     onlyPnl,
     showPnLSubgraph,
+    dateRange,
   });
 
   return (
     <div className="w-full h-[600px] flex flex-col">
-      {/* Main chart: equity (or PnL if only PnL) & drawdown */}
-      <div className={showPnLSubgraph ? "flex-1" : "flex-1"}>
+      {/* MAIN CHART */}
+      <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            // Render lines from filtered data
             data={visibleData}
             margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
           >
@@ -176,9 +177,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               domain={dollarDomain}
               tick={{ fontSize: 12 }}
               label={{
-                value: onlyPnl
-                  ? "Trade P&L ($)"
-                  : "Account Value ($)",
+                value: onlyPnl ? "Trade P&L ($)" : "Account Value ($)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -50,
@@ -201,6 +200,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 }}
               />
             )}
+
             <Tooltip
               trigger="hover"
               formatter={(value: number, name: string) => {
@@ -214,7 +214,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               }
             />
 
-            {/* Equity line */}
+            {/* EQUITY LINE */}
             {isEquitySelected && (
               <Line
                 type="stepAfter"
@@ -229,7 +229,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               />
             )}
 
-            {/* Drawdown line */}
+            {/* DRAWDOWN LINE */}
             {isDrawdownSelected && (
               <Line
                 type="monotone"
@@ -244,7 +244,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               />
             )}
 
-            {/* Show PnL on main chart if it's the only metric */}
+            {/* PNL ON MAIN CHART (ONLY IF IT IS THE SINGLE METRIC) */}
             {onlyPnl && (
               <Line
                 type="stepAfter"
@@ -259,9 +259,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               />
             )}
 
-            {/* The brush references the FULL equityCurve data for indexing */}
+            {/* BRUSH - provide explicit start/end indices */}
             <Brush
-              data={data.equityCurve}
               dataKey="date"
               height={40}
               stroke="#8884d8"
@@ -270,19 +269,18 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               alwaysShowText
               onChange={handleBrushChange}
               tickFormatter={(date) => format(new Date(date), "MMM d")}
+              startIndex={0}
+              endIndex={data.equityCurve.length - 1}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Subgraph for PnL if multiple metrics are selected */}
+      {/* PNL SUBGRAPH (IF MULTIPLE METRICS SELECTED) */}
       {showPnLSubgraph && (
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={visibleData}
-              margin={{ top: 20, right: 70, bottom: 30, left: 70 }}
-            >
+            <LineChart data={visibleData} margin={{ top: 20, right: 70, bottom: 30, left: 70 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
                 dataKey="date"
@@ -305,9 +303,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               <Tooltip
                 trigger="hover"
                 formatter={(value: number) => [formatDollar(value), "P&L"]}
-                labelFormatter={(label) =>
-                  format(new Date(label), "MMM d, yyyy HH:mm")
-                }
+                labelFormatter={(label) => format(new Date(label), "MMM d, yyyy HH:mm")}
               />
               <Line
                 type="stepAfter"
