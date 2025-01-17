@@ -58,6 +58,25 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   // Show subgraph if PnL + (equity or drawdown) => i.e. PnL plus at least one more metric
   const showPnLSubgraph = isPnLSelected && selectedMetrics.length > 1;
 
+  // Calculate margins based on whether we have a second Y axis
+  const getChartMargins = (isMainChart: boolean) => {
+    if (isMainChart) {
+      return {
+        top: 20,
+        right: isDrawdownSelected ? 70 : 20,
+        bottom: showPnLSubgraph ? 60 : 30,
+        left: 70,
+      };
+    }
+    // Subgraph margins - match the main chart's margins for alignment
+    return {
+      top: 20,
+      right: isDrawdownSelected ? 70 : 20,
+      bottom: 30,
+      left: 70,
+    };
+  };
+
   // Filter data by current dateRange for the chart lines
   const getVisibleData = () => {
     if (!dateRange || !data.equityCurve.length) {
@@ -152,14 +171,31 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (!active || !payload?.length) return null;
 
+    // Group metrics by type for organized display
+    const metrics = {
+      equity: payload.find(p => p.name === "Account Value"),
+      pnl: payload.find(p => p.name === "P&L"),
+      drawdown: payload.find(p => p.name === "Peak to Peak Drawdown"),
+    };
+
     return (
       <div className="bg-white p-3 border rounded shadow-lg">
         <p className="text-gray-600 mb-2">{label ? format(new Date(label), "MMM d, yyyy HH:mm") : ""}</p>
-        {payload.map((item, index) => (
-          <p key={index} style={{ color: item.color }} className="whitespace-nowrap">
-            {item.name}: {item.name.includes("Drawdown") ? formatPercent(item.value) : formatDollar(item.value)}
+        {metrics.equity && (
+          <p style={{ color: metrics.equity.color }} className="whitespace-nowrap">
+            {metrics.equity.name}: {formatDollar(metrics.equity.value)}
           </p>
-        ))}
+        )}
+        {metrics.drawdown && (
+          <p style={{ color: metrics.drawdown.color }} className="whitespace-nowrap">
+            {metrics.drawdown.name}: {formatPercent(metrics.drawdown.value)}
+          </p>
+        )}
+        {(showPnLSubgraph || onlyPnl) && metrics.pnl && (
+          <p style={{ color: METRIC_COLORS.pnl }} className="whitespace-nowrap">
+            P&L: {formatDollar(metrics.pnl.value)}
+          </p>
+        )}
       </div>
     );
   };
@@ -173,7 +209,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               <ResponsiveContainer>
                 <LineChart
                   data={visibleData}
-                  margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
+                  margin={getChartMargins(true)}
                   syncId="tradingCharts"
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -273,7 +309,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 <ResponsiveContainer>
                   <LineChart
                     data={visibleData}
-                    margin={{ top: 20, right: 70, bottom: 30, left: 70 }}
+                    margin={getChartMargins(false)}
                     syncId="tradingCharts"
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -296,7 +332,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                       }}
                     />
                     <Tooltip
-                      content={<CustomTooltip />}
+                      content={() => null}
                       cursor={{ stroke: "#666", strokeWidth: 1 }}
                     />
                     <Line
