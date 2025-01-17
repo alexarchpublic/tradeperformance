@@ -32,6 +32,7 @@ interface BrushRange {
   endIndex?: number;
 }
 
+// Colors for each metric
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -41,17 +42,16 @@ const METRIC_COLORS = {
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
 
-  // Helpers to determine which metrics are selected
+  // Identify which metrics are selected
   const isEquitySelected = selectedMetrics.includes("equity");
   const isPnLSelected = selectedMetrics.includes("pnl");
   const isDrawdownSelected = selectedMetrics.includes("drawdown");
 
-  // If PnL is selected alone, show PnL on the main chart.
-  // If PnL is selected with any other metric(s), show it on a subgraph.
+  // Decide if PnL is on the main chart or subgraph
   const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
   const showPnLSubgraph = isPnLSelected && selectedMetrics.length > 1;
 
-  // Filter the data by the current dateRange
+  // Filter data by current dateRange for the chart lines
   const getVisibleData = () => {
     if (!dateRange || !data.equityCurve.length) {
       return data.equityCurve;
@@ -62,26 +62,23 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
-  // Called whenever the user drags/zooms the brush
+  // When brush changes, update our dateRange state
   const handleBrushChange = (range: BrushRange) => {
-    if (!range || range.startIndex === undefined || range.endIndex === undefined) {
+    if (
+      !range ||
+      typeof range.startIndex !== "number" ||
+      typeof range.endIndex !== "number"
+    ) {
       setDateRange(null);
       return;
     }
-
-    const startIndex = Math.max(0, Math.min(range.startIndex, data.equityCurve.length - 1));
-    const endIndex = Math.max(0, Math.min(range.endIndex, data.equityCurve.length - 1));
-
-    const startDate = new Date(data.equityCurve[startIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[endIndex].date).getTime();
-
-    setDateRange({
-      start: startDate,
-      end: endDate
-    });
+    // Use the full data set here (data.equityCurve), not visibleData
+    const startDate = new Date(data.equityCurve[range.startIndex].date).getTime();
+    const endDate = new Date(data.equityCurve[range.endIndex].date).getTime();
+    setDateRange({ start: startDate, end: endDate });
   };
 
-  // Compute Y-axis domains
+  // Compute axis domains
   const calculateDomains = () => {
     const visibleData = getVisibleData();
     if (!visibleData.length) {
@@ -96,37 +93,30 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     const pnlValues = visibleData.map((d) => d.pnl);
     const drawdownValues = visibleData.map((d) => d.drawdown);
 
-    // Equity domain
     const maxEquity = Math.max(...equityValues);
     const minEquity = Math.min(...equityValues);
     const equityPadding = (maxEquity - minEquity) * 0.1;
 
-    // PnL domain
     const maxPnL = Math.max(...pnlValues, 0);
     const minPnL = Math.min(...pnlValues, 0);
     const pnlPadding = (maxPnL - minPnL) * 0.1;
 
-    // Drawdown domain
     const minDrawdown = Math.min(...drawdownValues);
     const drawdownPadding = Math.abs(minDrawdown) * 0.1;
 
-    // Decide the main chart's dollar-domain logic:
     let dollarMin: number;
     let dollarMax: number;
 
     if (onlyPnl) {
-      // Only PnL is selected => main chart should display PnL on dollar axis
+      // Only PnL => main chart shows PnL
       dollarMin = minPnL - pnlPadding;
       dollarMax = maxPnL + pnlPadding;
     } else if (isEquitySelected) {
-      // Equity is selected (and not "only PnL"), so use equity domain
+      // Equity is included => main chart uses equity domain
       dollarMin = minEquity - equityPadding;
       dollarMax = maxEquity + equityPadding;
     } else {
-      // If we don't have equity or only have drawdown or a combination
-      // like PnL + drawdown but not alone => PnL subgraph
-      // The main chart has no dollar-based lines except equity (not selected),
-      // so let's default the main chart's dollar axis to [0,0].
+      // e.g. drawdown (without equity) => no meaningful $ metric to show
       dollarMin = 0;
       dollarMax = 0;
     }
@@ -142,18 +132,15 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
 
   // Formatters
-  const formatDollar = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+  const formatDollar = (value: number) =>
+    new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
-  };
 
-  const formatPercent = (value: number) => {
-    return `${value.toFixed(2)}%`;
-  };
+  const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
   // Debug logging
   console.debug("TradeChart state:", {
@@ -166,179 +153,176 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   });
 
   return (
-    <div className="w-full h-[600px]">
-      <ResponsiveContainer>
-        <div className={`flex flex-col h-full ${showPnLSubgraph ? 'h-2/3' : 'h-full'}`}>
-          {/* Main Chart */}
-          <div className="flex-1">
-            <ResponsiveContainer>
-              <LineChart
-                data={data.equityCurve}
-                margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
-                  tick={{ fontSize: 12 }}
-                  padding={{ left: 20, right: 20 }}
-                />
-                <YAxis
-                  yAxisId="dollar"
-                  orientation="left"
-                  tickFormatter={formatDollar}
-                  domain={dollarDomain}
-                  tick={{ fontSize: 12 }}
-                  label={{
-                    value: "Account Value ($)",
-                    angle: -90,
-                    position: "insideLeft",
-                    offset: -50,
-                    style: { textAnchor: "middle", fontSize: 12 },
-                  }}
-                />
-                {isDrawdownSelected && (
-                  <YAxis
-                    yAxisId="drawdown"
-                    orientation="right"
-                    tickFormatter={formatPercent}
-                    domain={drawdownDomain}
-                    tick={{ fontSize: 12 }}
-                    label={{
-                      value: "Peak to Peak Drawdown (%)",
-                      angle: 90,
-                      position: "insideRight",
-                      offset: -40,
-                      style: { textAnchor: "middle", fontSize: 12 },
-                    }}
-                  />
-                )}
-                <Tooltip
-                  trigger="hover"
-                  formatter={(value: number, name: string) => {
-                    if (name === "Peak to Peak Drawdown") {
-                      return [formatPercent(value), name];
-                    }
-                    return [formatDollar(value), name];
-                  }}
-                  labelFormatter={(label) =>
-                    format(new Date(label), "MMM d, yyyy HH:mm")
-                  }
-                />
+    <div className="w-full h-[600px] flex flex-col">
+      {/* Main chart: equity (or PnL if only PnL) & drawdown */}
+      <div className={showPnLSubgraph ? "flex-1" : "flex-1"}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            // Render lines from filtered data
+            data={visibleData}
+            margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+              tick={{ fontSize: 12 }}
+              padding={{ left: 20, right: 20 }}
+            />
+            <YAxis
+              yAxisId="dollar"
+              orientation="left"
+              tickFormatter={formatDollar}
+              domain={dollarDomain}
+              tick={{ fontSize: 12 }}
+              label={{
+                value: onlyPnl
+                  ? "Trade P&L ($)"
+                  : "Account Value ($)",
+                angle: -90,
+                position: "insideLeft",
+                offset: -50,
+                style: { textAnchor: "middle", fontSize: 12 },
+              }}
+            />
+            {isDrawdownSelected && (
+              <YAxis
+                yAxisId="drawdown"
+                orientation="right"
+                tickFormatter={formatPercent}
+                domain={drawdownDomain}
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Peak to Peak Drawdown (%)",
+                  angle: 90,
+                  position: "insideRight",
+                  offset: -40,
+                  style: { textAnchor: "middle", fontSize: 12 },
+                }}
+              />
+            )}
+            <Tooltip
+              trigger="hover"
+              formatter={(value: number, name: string) => {
+                if (name === "Peak to Peak Drawdown") {
+                  return [formatPercent(value), name];
+                }
+                return [formatDollar(value), name];
+              }}
+              labelFormatter={(label) =>
+                format(new Date(label), "MMM d, yyyy HH:mm")
+              }
+            />
 
-                {/* EQUITY line */}
-                {isEquitySelected && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="equity"
-                    name="Account Value"
-                    stroke={METRIC_COLORS.equity}
-                    yAxisId="dollar"
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
+            {/* Equity line */}
+            {isEquitySelected && (
+              <Line
+                type="stepAfter"
+                dataKey="equity"
+                name="Account Value"
+                stroke={METRIC_COLORS.equity}
+                yAxisId="dollar"
+                dot={false}
+                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
 
-                {/* DRAWDOWN line */}
-                {isDrawdownSelected && (
-                  <Line
-                    type="monotone"
-                    dataKey="drawdown"
-                    name="Peak to Peak Drawdown"
-                    stroke={METRIC_COLORS.drawdown}
-                    yAxisId="drawdown"
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
+            {/* Drawdown line */}
+            {isDrawdownSelected && (
+              <Line
+                type="monotone"
+                dataKey="drawdown"
+                name="Peak to Peak Drawdown"
+                stroke={METRIC_COLORS.drawdown}
+                yAxisId="drawdown"
+                dot={false}
+                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
 
-                {/* PNL line on main chart ONLY if it's the only metric selected */}
-                {onlyPnl && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="pnl"
-                    name="P&L"
-                    stroke={METRIC_COLORS.pnl}
-                    yAxisId="dollar"
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
+            {/* Show PnL on main chart if it's the only metric */}
+            {onlyPnl && (
+              <Line
+                type="stepAfter"
+                dataKey="pnl"
+                name="P&L"
+                stroke={METRIC_COLORS.pnl}
+                yAxisId="dollar"
+                dot={false}
+                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
 
-                <Brush
-                  dataKey="date"
-                  height={40}
-                  stroke="#8884d8"
-                  fill="#1f2937"
-                  travellerWidth={8}
-                  onChange={handleBrushChange}
-                  tickFormatter={(date) => format(new Date(date), "MMM d")}
-                  startIndex={0}
-                  endIndex={data.equityCurve.length - 1}
-                  alwaysShowText
-                  y={0}
-                  data={visibleData}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+            {/* The brush references the FULL equityCurve data for indexing */}
+            <Brush
+              data={data.equityCurve}
+              dataKey="date"
+              height={40}
+              stroke="#8884d8"
+              fill="#1f2937"
+              travellerWidth={8}
+              alwaysShowText
+              onChange={handleBrushChange}
+              tickFormatter={(date) => format(new Date(date), "MMM d")}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
 
-          {/* PnL Subgraph */}
-          {showPnLSubgraph && (
-            <div className="h-1/3">
-              <ResponsiveContainer>
-                <LineChart
-                  data={visibleData}
-                  margin={{ top: 20, right: 70, bottom: 30, left: 70 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
-                    tick={{ fontSize: 12 }}
-                    padding={{ left: 20, right: 20 }}
-                  />
-                  <YAxis
-                    tickFormatter={formatDollar}
-                    domain={pnlDomain}
-                    tick={{ fontSize: 12 }}
-                    label={{
-                      value: "Trade P&L ($)",
-                      angle: -90,
-                      position: "insideLeft",
-                      offset: -50,
-                      style: { textAnchor: "middle", fontSize: 12 },
-                    }}
-                  />
-                  <Tooltip
-                    trigger="hover"
-                    formatter={(value: number) => [formatDollar(value), "P&L"]}
-                    labelFormatter={(label) =>
-                      format(new Date(label), "MMM d, yyyy HH:mm")
-                    }
-                  />
-                  <Line
-                    type="stepAfter"
-                    dataKey="pnl"
-                    name="P&L"
-                    stroke={METRIC_COLORS.pnl}
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+      {/* Subgraph for PnL if multiple metrics are selected */}
+      {showPnLSubgraph && (
+        <div className="h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={visibleData}
+              margin={{ top: 20, right: 70, bottom: 30, left: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                tick={{ fontSize: 12 }}
+                padding={{ left: 20, right: 20 }}
+              />
+              <YAxis
+                tickFormatter={formatDollar}
+                domain={pnlDomain}
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Trade P&L ($)",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: -50,
+                  style: { textAnchor: "middle", fontSize: 12 },
+                }}
+              />
+              <Tooltip
+                trigger="hover"
+                formatter={(value: number) => [formatDollar(value), "P&L"]}
+                labelFormatter={(label) =>
+                  format(new Date(label), "MMM d, yyyy HH:mm")
+                }
+              />
+              <Line
+                type="stepAfter"
+                dataKey="pnl"
+                name="P&L"
+                stroke={METRIC_COLORS.pnl}
+                dot={false}
+                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-      </ResponsiveContainer>
+      )}
     </div>
   );
 }
