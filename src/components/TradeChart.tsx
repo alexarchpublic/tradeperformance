@@ -40,8 +40,9 @@ const METRIC_COLORS = {
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
-  const showPnLSubgraph =
-    selectedMetrics.includes("equity") && selectedMetrics.includes("pnl");
+
+  // If both equity and pnl are selected, show the PnL subgraph
+  const showPnLSubgraph = selectedMetrics.includes("equity") && selectedMetrics.includes("pnl");
 
   const getVisibleData = () => {
     if (!dateRange || !data.equityCurve.length) {
@@ -66,6 +67,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     setDateRange({ start: startDate, end: endDate });
   };
 
+  // Compute Y-axis domains
   const calculateDomains = () => {
     const visibleData = getVisibleData();
     if (!visibleData.length) {
@@ -91,7 +93,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     const minDrawdown = Math.min(...drawdownValues);
     const drawdownPadding = Math.abs(minDrawdown) * 0.1;
 
-    let dollarMin, dollarMax;
+    let dollarMin: number;
+    let dollarMax: number;
     if (selectedMetrics.includes("equity") && !selectedMetrics.includes("pnl")) {
       dollarMin = minEquity - equityPadding;
       dollarMax = maxEquity + equityPadding;
@@ -103,7 +106,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       selectedMetrics.includes("pnl") &&
       !showPnLSubgraph
     ) {
-      // If both selected but not subgraph, we combine them on one scale
+      // Both selected but no subgraph => combine them on one scale
       dollarMin = Math.min(minEquity - equityPadding, minPnL - pnlPadding);
       dollarMax = Math.max(maxEquity + equityPadding, maxPnL + pnlPadding);
     } else {
@@ -135,7 +138,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return `${value.toFixed(2)}%`;
   };
 
-  // Debugging logs
+  // Debug logging
   console.debug("TradeChart state:", {
     hoveredTradeIndex,
     visibleDataLength: visibleData.length,
@@ -145,9 +148,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   });
 
   return (
-    <div className="w-full flex flex-col space-y-4">
-      {/* Top chart => equity & drawdown */}
-      <div className={!showPnLSubgraph ? "h-96" : "h-64"}>
+    <div className="w-full h-[600px] flex flex-col">
+      {/* Main chart (equity & drawdown) fills most of the space */}
+      <div className={showPnLSubgraph ? "flex-1" : "flex-1"}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={visibleData}
@@ -163,7 +166,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
             <YAxis
               yAxisId="dollar"
               orientation="left"
-              tickFormatter={(value) => formatDollar(value)}
+              tickFormatter={formatDollar}
               domain={dollarDomain}
               tick={{ fontSize: 12 }}
               label={{
@@ -178,7 +181,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               <YAxis
                 yAxisId="drawdown"
                 orientation="right"
-                tickFormatter={(value) => formatPercent(value)}
+                tickFormatter={formatPercent}
                 domain={drawdownDomain}
                 tick={{ fontSize: 12 }}
                 label={{
@@ -232,21 +235,20 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               dataKey="date"
               height={40}
               stroke="#8884d8"
-              onChange={handleBrushChange}
-              tickFormatter={(date) => format(new Date(date), "MMM d")}
               fill="#1f2937"
               travellerWidth={8}
-              alwaysShowText={true}
-              gap={5}
-              // IMPORTANT: no startIndex / endIndex so it can move
+              alwaysShowText
+              onChange={handleBrushChange}
+              tickFormatter={(date) => format(new Date(date), "MMM d")}
+              // No startIndex or endIndex => user can now drag
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Bottom chart => PnL subgraph */}
+      {/* If both equity and PnL are selected, show smaller subgraph for PnL */}
       {showPnLSubgraph && (
-        <div className="h-36">
+        <div className="h-40"> 
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={visibleData}
@@ -260,7 +262,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 padding={{ left: 20, right: 20 }}
               />
               <YAxis
-                tickFormatter={(value) => formatDollar(value)}
+                tickFormatter={formatDollar}
                 domain={pnlDomain}
                 tick={{ fontSize: 12 }}
                 label={{
