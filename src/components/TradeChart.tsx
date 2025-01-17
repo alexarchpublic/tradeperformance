@@ -8,7 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Brush,
+  ReferenceArea,
 } from "recharts";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -40,6 +40,10 @@ const METRIC_COLORS = {
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
+  const [zoomArea, setZoomArea] = useState<{ start: string | null; end: string | null }>({
+    start: null,
+    end: null,
+  });
 
   // Identify which metrics are selected
   const isEquitySelected = selectedMetrics.includes("equity");
@@ -62,27 +66,36 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
-  // When brush changes, update our dateRange state
-  const handleBrushChange = (range: BrushRange) => {
-    // Ensure range exists and has valid indices
-    if (!range || range.startIndex === undefined || range.endIndex === undefined) {
+  const handleMouseDown = (e: any) => {
+    if (!e || !e.activeLabel) return;
+    setZoomArea({ start: e.activeLabel, end: null });
+  };
+
+  const handleMouseMove = (e: any) => {
+    if (!e || !e.activeLabel || !zoomArea.start) return;
+    setZoomArea(prev => ({ ...prev, end: e.activeLabel }));
+  };
+
+  const handleMouseUp = () => {
+    if (!zoomArea.start || !zoomArea.end) {
+      setZoomArea({ start: null, end: null });
       return;
     }
 
-    // Ensure indices are within valid bounds
-    const maxIndex = data.equityCurve.length - 1;
-    const validStartIndex = Math.max(0, Math.min(range.startIndex, maxIndex));
-    const validEndIndex = Math.max(0, Math.min(range.endIndex, maxIndex));
+    const startDate = new Date(zoomArea.start).getTime();
+    const endDate = new Date(zoomArea.end).getTime();
 
-    // Ensure we have a valid range (at least one point difference)
-    if (validStartIndex === validEndIndex) {
-      return;
-    }
+    // Set the date range with the smaller date as start
+    setDateRange({
+      start: Math.min(startDate, endDate),
+      end: Math.max(startDate, endDate),
+    });
 
-    const startDate = new Date(data.equityCurve[validStartIndex].date).getTime();
-    const endDate = new Date(data.equityCurve[validEndIndex].date).getTime();
+    setZoomArea({ start: null, end: null });
+  };
 
-    setDateRange({ start: startDate, end: endDate });
+  const handleResetZoom = () => {
+    setDateRange(null);
   };
 
   // Compute axis domains
@@ -169,6 +182,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               <LineChart
                 data={visibleData}
                 margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
@@ -267,22 +283,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   />
                 )}
 
-                {/* BRUSH - provide explicit start/end indices */}
-                <Brush
-                  dataKey="date"
-                  height={40}
-                  stroke="#8884d8"
-                  fill="#1f2937"
-                  travellerWidth={8}
-                  alwaysShowText
-                  onChange={handleBrushChange}
-                  tickFormatter={(date) => format(new Date(date), "MMM d")}
-                  data={data.equityCurve}
-                  x={0}
-                  y={0}
-                  startIndex={dateRange ? undefined : 0}
-                  endIndex={dateRange ? undefined : data.equityCurve.length - 1}
-                />
+                {/* Zoom selection area */}
+                {zoomArea.start && zoomArea.end && (
+                  <ReferenceArea
+                    x1={zoomArea.start}
+                    x2={zoomArea.end}
+                    strokeOpacity={0.3}
+                    fill="#8884d8"
+                    fillOpacity={0.3}
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -334,6 +344,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
           )}
         </div>
       </ResponsiveContainer>
+      {dateRange && (
+        <button
+          onClick={handleResetZoom}
+          className="absolute top-4 right-4 px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600"
+        >
+          Reset Zoom
+        </button>
+      )}
     </div>
   );
 }
