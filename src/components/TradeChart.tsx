@@ -165,7 +165,10 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     return () => window.removeEventListener('resize', updateWidth);
   }, [isDrawdownSelected]); // Re-measure when drawdown axis changes
 
-  // Calculate domains for the main chart & subgraph
+  /**
+   * Calculate domains for the main chart & subgraph with dynamic padding
+   * that adjusts based on the data range magnitude.
+   */
   function calculateDomains() {
     if (!visibleData.length) {
       return {
@@ -181,14 +184,17 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
     const maxEquity = Math.max(...eqVals);
     const minEquity = Math.min(...eqVals);
-    const equityPad = (maxEquity - minEquity) * 0.1;
+    // Use dynamic padding based on the range magnitude
+    const equityRange = maxEquity - minEquity;
+    const equityPad = Math.max(equityRange * 0.05, 1000); // At least $1000 padding
 
     const maxPnL = Math.max(...pnlVals, 0);
     const minPnL = Math.min(...pnlVals, 0);
-    const pnlPad = (maxPnL - minPnL) * 0.1;
+    const pnlRange = maxPnL - minPnL;
+    const pnlPad = Math.max(pnlRange * 0.05, 500); // At least $500 padding
 
     const minDD = Math.min(...ddVals);
-    const ddPad = Math.abs(minDD) * 0.1;
+    const ddPad = Math.max(Math.abs(minDD) * 0.05, 1); // At least 1% padding
 
     let dollarMin: number;
     let dollarMax: number;
