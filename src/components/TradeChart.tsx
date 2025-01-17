@@ -303,7 +303,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
             {showPnLSubgraph && (
               <YAxis
                 yAxisId="pnlHidden"
-                domain={[0, 0]}
+                domain={["auto", "auto"]}
                 hide={true}
               />
             )}
