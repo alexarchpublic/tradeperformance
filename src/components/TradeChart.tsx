@@ -308,6 +308,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 padding={{ left: 20, right: 20 }}
               />
               <YAxis
+                yAxisId="pnl"
+                orientation="left"
                 domain={pnlDomain}
                 tick={{ fontSize: 12 }}
                 tickFormatter={(value) => new Intl.NumberFormat('en-US', {
@@ -324,12 +326,23 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   style: { textAnchor: "middle", fontSize: 12 },
                 }}
               />
+              {/* Add invisible right axis when drawdown is enabled to match main chart width */}
+              {isDrawdownSelected && (
+                <YAxis
+                  yAxisId="spacer"
+                  orientation="right"
+                  domain={[0, 1]}
+                  hide={true}
+                  width={70}
+                />
+              )}
               <Tooltip content={() => null} />
               <Line
                 type="stepAfter"
                 dataKey="pnl"
                 name="P&L"
                 stroke={METRIC_COLORS.pnl}
+                yAxisId="pnl"
                 dot={false}
                 strokeWidth={2}
                 isAnimationActive={false}
