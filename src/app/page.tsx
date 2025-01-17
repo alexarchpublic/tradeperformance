@@ -298,6 +298,48 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="mt-16 border-t pt-8 pb-16 text-sm text-gray-600">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Notes Section */}
+          <div>
+            <h3 className="font-semibold mb-2">Notes</h3>
+            <p className="leading-relaxed">
+              The trade data presented reflects our most current dataset derived from the latest versions of our algorithms. 
+              Actual trading results may vary from displayed data due to ongoing algorithm optimizations aimed at addressing 
+              market dynamics and technical improvements. While we strive to minimize adverse events, some clients may 
+              experience larger drawdowns than shown. It's important to note that historical performance should not be 
+              considered predictive of future results.
+            </p>
+          </div>
+
+          {/* Disclaimer Section */}
+          <div>
+            <h3 className="font-semibold mb-2">Disclaimer</h3>
+            <div className="space-y-4 leading-relaxed">
+              <p>
+                <span className="font-medium">Risk Acknowledgment</span> – Engaging in futures trading involves significant risk, especially when trading on margin. Such activities may not be suitable for everyone, given the high level of risk involved. The leverage provided can both amplify gains and losses. Prior to participating in trading, it's crucial to evaluate your investment goals, experience level, and risk tolerance carefully. There is a real risk that you might lose part or all of your initial investment, so you should not invest funds that you cannot afford to lose. We strongly advise that you fully understand all the risks related to trading and, if necessary, seek guidance from an independent financial advisor.
+              </p>
+              <p>
+                <span className="font-medium">Regulatory Compliance</span> – Only individuals who are registered with certain regulatory bodies are authorized to offer advice or conduct transactions in futures. These bodies include the Commodity Futures Trading Commission (CFTC), the Securities and Exchange Commission (SEC), and state regulatory authorities, each classified as an "Intermediary." The Arch Public, its affiliates, or any associated individuals involved in creating and maintaining our offerings are not registered as Intermediaries. We encourage our clients to consult with a licensed investment professional before engaging in any trading strategies or transactions. We do not guarantee that the outcomes discussed herein will be achieved, nor do we claim that our past performance is indicative of future results.
+              </p>
+              <p>
+                <span className="font-medium">Educational Purpose Only</span> – Information provided by The Arch Public is for educational purposes and should not be taken as personalized investment advice. Investment decisions should always be made based on your specific financial needs and circumstances, with the counsel of a professional advisor. Engaging in trading without thorough understanding and professional advice may be detrimental to your financial health.
+              </p>
+              <p>
+                <span className="font-medium">CFTC/NFA Disclaimer</span> – Simulated or hypothetical trading scenarios have limitations and may not accurately represent real trading outcomes. Such results do not reflect actual trading and may not capture the impact of market factors such as liquidity. Hypothetical trading does not involve financial risk, and no simulated trading record can account for the risk of actual trading. The Arch Public makes no claims that any account will achieve profits or losses similar to those discussed.
+              </p>
+              <p>
+                <span className="font-medium">General Warning</span> – Trading involves the risk of loss and may not be suitable for all individuals. Past performance is not indicative of future results, and there can be significant differences between hypothetical and actual trading results. Deciding to trade represents a personal decision, and The Arch Public advises against investing money that you cannot afford to lose. This disclaimer does not consider your individual financial circumstances and is not intended as specific investment advice.
+              </p>
+              <p>
+                <span className="font-medium">Acknowledgment</span> – User's acknowledge that all software is user driven and controlled by each individual trader, and not by Arch Public or any of its affiliates.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
