@@ -142,13 +142,22 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
           // Get the plot area (excluding axes)
           const plotArea = chartContainer.querySelector('.recharts-plot-area');
           if (plotArea) {
-            setActiveWidth(plotArea.getBoundingClientRect().width);
+            const width = plotArea.getBoundingClientRect().width;
+            setActiveWidth(width);
+            
+            // Find and update the subgraph plot area width
+            const subgraphPlot = document.querySelector('.pnl-subgraph .recharts-plot-area');
+            if (subgraphPlot) {
+              (subgraphPlot as HTMLElement).style.width = `${width}px`;
+            }
           }
         }
       }
     };
 
-    updateWidth();
+    // Initial update
+    setTimeout(updateWidth, 0);
+    // Update on resize
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, [isDrawdownSelected]); // Re-measure when drawdown axis changes
@@ -333,8 +342,9 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
       {/* PnL Subgraph */}
       {showPnLSubgraph && (
         <div className="h-[25%] mb-2">
-          <ResponsiveContainer width={activeWidth ? `${activeWidth}px` : "100%"} height="100%">
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart
+              className="pnl-subgraph"
               data={visibleData}
               margin={getChartMargins(isDrawdownSelected, true)}
               syncId="trading-charts"
