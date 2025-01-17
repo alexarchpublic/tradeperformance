@@ -231,8 +231,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   tickFormatter={(date) => format(new Date(date), "MMM d")}
                   fill="#1f2937"
                   travellerWidth={8}
-                  startIndex={0}
-                  endIndex={data.equityCurve.length - 1}
                   alwaysShowText={true}
                   gap={5}
                 />
