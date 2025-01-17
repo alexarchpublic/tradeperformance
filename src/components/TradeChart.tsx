@@ -12,7 +12,7 @@ import {
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
-import { EquityCurvePoint } from "@/lib/utils/trade-data";
+import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
 interface TradeChartProps {
   data: {
@@ -21,7 +21,7 @@ interface TradeChartProps {
   selectedMetrics: string[];
 }
 
-// Colors for our lines
+// Colors for line metrics
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -30,7 +30,7 @@ const METRIC_COLORS = {
 
 /**
  * If drawdown is selected => second Y-axis => bigger right margin so both
- * the main chart and subgraph have the same width, keeping vertical lines aligned.
+ * the main chart and subgraph have the same width, keeping hover lines aligned.
  */
 function getChartMargins(isDrawdownSelected: boolean, isSubgraph: boolean) {
   const rightMargin = isDrawdownSelected ? 70 : 20;
@@ -43,8 +43,8 @@ function getChartMargins(isDrawdownSelected: boolean, isSubgraph: boolean) {
 }
 
 /**
- * Main chart tooltip that shows Equity, Drawdown, and PnL
- * whether PnL is displayed on main or subgraph.
+ * Tooltip for the main chart that shows Equity, Drawdown, and/or PnL.
+ * We make sure PnL data is always included here, even if drawn in a subgraph.
  */
 interface CustomMainTooltipProps {
   active?: boolean;
@@ -106,26 +106,29 @@ function CustomMainTooltip({
 }
 
 export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
-  // 1. Let user pick a startIndex/endIndex with your custom RangeSlider
+  // Track the visible range [startIndex, endIndex] with your custom RangeSlider
   const [rangeValues, setRangeValues] = useState<[number, number]>([
     0,
     data.equityCurve.length - 1,
   ]);
 
-  // This function slices equityCurve by the chosen indexes
+  // Slice the equityCurve based on the selected slider range
   const visibleData = useMemo(() => {
     const [startIdx, endIdx] = rangeValues;
     return data.equityCurve.slice(startIdx, endIdx + 1);
   }, [data.equityCurve, rangeValues]);
 
-  // Identify which metrics are selected
+  // Identify which metrics are picked
   const isEquitySelected = selectedMetrics.includes("equity");
   const isPnLSelected = selectedMetrics.includes("pnl");
   const isDrawdownSelected = selectedMetrics.includes("drawdown");
-  // Only PnL => main chart; else subgraph
-  const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
 
-  // Y-axis domain calculations
+  // If user picks only "pnl", it goes to the main chart. Otherwise => subgraph
+  const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
+  // Show subgraph for PnL if there's at least one other metric
+  const showPnLSubgraph = isPnLSelected && !onlyPnl;
+
+  // Calculate domains for the main chart & subgraph
   function calculateDomains() {
     if (!visibleData.length) {
       return {
@@ -141,7 +144,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
     const maxEquity = Math.max(...eqVals);
     const minEquity = Math.min(...eqVals);
-    const eqPad = (maxEquity - minEquity) * 0.1;
+    const equityPad = (maxEquity - minEquity) * 0.1;
 
     const maxPnL = Math.max(...pnlVals, 0);
     const minPnL = Math.min(...pnlVals, 0);
@@ -153,14 +156,16 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     let dollarMin: number;
     let dollarMax: number;
 
+    // If only PnL is selected => main chart uses PnL domain
     if (onlyPnl) {
       dollarMin = minPnL - pnlPad;
       dollarMax = maxPnL + pnlPad;
     } else if (isEquitySelected) {
-      dollarMin = minEquity - eqPad;
-      dollarMax = maxEquity + eqPad;
+      // Otherwise, if equity is selected => main chart is Equity
+      dollarMin = minEquity - equityPad;
+      dollarMax = maxEquity + equityPad;
     } else {
-      // e.g. if user only picks drawdown => 0..0 for main axis
+      // e.g., if user only picks drawdown => main axis is 0..0
       dollarMin = 0;
       dollarMax = 0;
     }
@@ -176,16 +181,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
   return (
     <div className="w-full h-[600px] flex flex-col space-y-2">
-      {/* Range slider above the chart. Keep your custom logic. */}
-      <RangeSlider
-        value={rangeValues}
-        onChange={setRangeValues}
-        min={0}
-        max={data.equityCurve.length - 1}
-        step={1}
-      />
 
-      {/* Main chart */}
+      {/* 1) Main chart (and optional drawdown axis) */}
       <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -228,7 +225,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* Main chart tooltip includes PnL, Drawdown, Equity */}
+            {/* Single main tooltip, including PnL data even if on subgraph */}
             <Tooltip content={<CustomMainTooltip />} />
 
             {/* Equity line */}
@@ -259,7 +256,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* If user ONLY picks PnL => main chart line */}
+            {/* If user picks only "pnl" => main chart line */}
             {onlyPnl && (
               <Line
                 type="stepAfter"
@@ -273,8 +270,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
-            {/* If user picks PnL + others => invisible PnL line here for tooltip data */}
-            {!onlyPnl && isPnLSelected && (
+            {/* If user picks PnL + other => invisible "pnl" line so tooltip includes PnL */}
+            {showPnLSubgraph && (
               <Line
                 type="stepAfter"
                 dataKey="pnl"
@@ -290,8 +287,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* Subgraph for PnL if multiple metrics are selected (no tooltip) */}
-      {isPnLSelected && !onlyPnl && (
+      {/* 2) Subgraph for PnL if multiple metrics are selected (no tooltip) */}
+      {showPnLSubgraph && (
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -316,7 +313,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   style: { textAnchor: "middle", fontSize: 12 },
                 }}
               />
-              {/* No tooltip => the main chart tooltip is used for PnL */}
+              {/* No tooltip => rely on the main chart for PnL data */}
               <Line
                 type="stepAfter"
                 dataKey="pnl"
@@ -330,6 +327,15 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* 3) The Range Slider => moved below the charts */}
+      <RangeSlider
+        value={rangeValues}
+        onChange={setRangeValues}
+        min={0}
+        max={data.equityCurve.length - 1}
+        step={1}
+      />
     </div>
   );
 }
