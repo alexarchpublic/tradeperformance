@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { Slider } from '@/components/ui/slider';
 
 interface RangeSliderProps {
   value: [number, number];
@@ -48,11 +47,11 @@ export function RangeSlider({
 
     if (dragStart.handle === 'left') {
       // Moving left handle
-      let newStart = Math.max(min, Math.min(dragStart.range[0] + rangeDelta, value[1] - step));
+      const newStart = Math.max(min, Math.min(dragStart.range[0] + rangeDelta, value[1] - step));
       onChange([newStart, value[1]]);
     } else if (dragStart.handle === 'right') {
       // Moving right handle
-      let newEnd = Math.max(value[0] + step, Math.min(dragStart.range[1] + rangeDelta, max));
+      const newEnd = Math.max(value[0] + step, Math.min(dragStart.range[1] + rangeDelta, max));
       onChange([value[0], newEnd]);
     } else {
       // Panning the entire range
