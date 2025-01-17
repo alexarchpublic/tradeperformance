@@ -51,9 +51,11 @@ export default function Home() {
             <Image 
               src="/ArchPublicLogo.png" 
               alt="Arch Public Logo" 
-              width={48}
-              height={48}
+              width={96}
+              height={96}
               className="h-12 w-auto"
+              quality={100}
+              priority
             />
           </div>
         </div>
