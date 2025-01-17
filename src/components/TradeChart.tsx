@@ -184,17 +184,17 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
     const maxEquity = Math.max(...eqVals);
     const minEquity = Math.min(...eqVals);
-    // Use dynamic padding based on the range magnitude
-    const equityRange = maxEquity - minEquity;
-    const equityPad = Math.max(equityRange * 0.05, 1000); // At least $1000 padding
+    // Calculate padding based on the magnitude of the values
+    const equityMagnitude = Math.max(Math.abs(maxEquity), Math.abs(minEquity));
+    const equityPad = Math.max(equityMagnitude * 0.02, 500); // 2% of magnitude or $500 minimum
 
     const maxPnL = Math.max(...pnlVals, 0);
     const minPnL = Math.min(...pnlVals, 0);
-    const pnlRange = maxPnL - minPnL;
-    const pnlPad = Math.max(pnlRange * 0.05, 500); // At least $500 padding
+    const pnlMagnitude = Math.max(Math.abs(maxPnL), Math.abs(minPnL));
+    const pnlPad = Math.max(pnlMagnitude * 0.05, 250); // 5% of magnitude or $250 minimum
 
     const minDD = Math.min(...ddVals);
-    const ddPad = Math.max(Math.abs(minDD) * 0.05, 1); // At least 1% padding
+    const ddPad = Math.max(Math.abs(minDD) * 0.05, 0.5); // 5% of magnitude or 0.5% minimum
 
     let dollarMin: number;
     let dollarMax: number;
@@ -205,7 +205,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
       dollarMax = maxPnL + pnlPad;
     } else if (isEquitySelected) {
       // Otherwise, if equity is selected => main chart is Equity
-      dollarMin = minEquity - equityPad;
+      // For equity, ensure we never go below 0 unless the actual values do
+      dollarMin = Math.min(minEquity - equityPad, minEquity * 0.98);
       dollarMax = maxEquity + equityPad;
     } else {
       // e.g., if user only picks drawdown => main axis is 0..0
