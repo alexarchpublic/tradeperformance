@@ -13,6 +13,7 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
+import { RangeSlider } from "@/components/ui/range-slider";
 
 interface TradeChartProps {
   data: {
@@ -44,10 +45,7 @@ const METRIC_COLORS = {
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
-  const [zoomArea, setZoomArea] = useState<{ start: string | null; end: string | null }>({
-    start: null,
-    end: null,
-  });
+  const [sliderRange, setSliderRange] = useState<[number, number]>([0, 100]);
 
   // Identify which metrics are selected
   const isEquitySelected = selectedMetrics.includes("equity");
@@ -70,36 +68,20 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     });
   };
 
-  const handleMouseDown = (e: ChartMouseEvent) => {
-    if (!e?.activeLabel) return;
-    setZoomArea({ start: e.activeLabel, end: null });
-  };
-
-  const handleMouseMove = (e: ChartMouseEvent) => {
-    if (!e?.activeLabel || !zoomArea.start) return;
-    setZoomArea(prev => ({ ...prev, end: e.activeLabel || null }));
-  };
-
-  const handleMouseUp = () => {
-    if (!zoomArea.start || !zoomArea.end) {
-      setZoomArea({ start: null, end: null });
-      return;
-    }
-
-    const startDate = new Date(zoomArea.start).getTime();
-    const endDate = new Date(zoomArea.end).getTime();
-
-    // Set the date range with the smaller date as start
+  // Convert slider range (0-100) to date range
+  const handleSliderChange = (newRange: [number, number]) => {
+    const firstDate = new Date(data.equityCurve[0].date);
+    const lastDate = new Date(data.equityCurve[data.equityCurve.length - 1].date);
+    const totalTimespan = lastDate.getTime() - firstDate.getTime();
+    
+    const startTime = firstDate.getTime() + (totalTimespan * (newRange[0] / 100));
+    const endTime = firstDate.getTime() + (totalTimespan * (newRange[1] / 100));
+    
     setDateRange({
-      start: Math.min(startDate, endDate),
-      end: Math.max(startDate, endDate),
+      start: startTime,
+      end: endTime
     });
-
-    setZoomArea({ start: null, end: null });
-  };
-
-  const handleResetZoom = () => {
-    setDateRange(null);
+    setSliderRange(newRange);
   };
 
   // Compute axis domains
@@ -186,9 +168,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               <LineChart
                 data={visibleData}
                 margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis
@@ -286,17 +265,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                     isAnimationActive={false}
                   />
                 )}
-
-                {/* Zoom selection area */}
-                {zoomArea.start && zoomArea.end && (
-                  <ReferenceArea
-                    x1={zoomArea.start}
-                    x2={zoomArea.end}
-                    strokeOpacity={0.3}
-                    fill="#8884d8"
-                    fillOpacity={0.3}
-                  />
-                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -348,14 +316,16 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
           )}
         </div>
       </ResponsiveContainer>
-      {dateRange && (
-        <button
-          onClick={handleResetZoom}
-          className="absolute top-4 right-4 px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600"
-        >
-          Reset Zoom
-        </button>
-      )}
+      <div className="absolute bottom-4 left-4 right-4">
+        <RangeSlider
+          value={sliderRange}
+          onChange={handleSliderChange}
+          min={0}
+          max={100}
+          step={0.1}
+          className="w-full"
+        />
+      </div>
     </div>
   );
 }
