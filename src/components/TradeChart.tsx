@@ -204,7 +204,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
       // When only PnL is selected, use PnL domain
       dollarDomain = pnlDomain;
     } else if (isEquitySelected) {
-      // For equity chart
+      // For equity chart, only consider equity values
       const maxEquity = Math.max(...eqVals);
       const minEquity = Math.min(...eqVals);
       const equityRange = maxEquity - minEquity;
@@ -243,6 +243,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
               tick={{ fontSize: 12 }}
               padding={{ left: 20, right: 20 }}
+              hide={showPnLSubgraph}
             />
             <YAxis
               yAxisId="dollar"
@@ -283,7 +284,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
             <Tooltip content={<CustomMainTooltip />} />
 
-            {/* Chart lines remain the same */}
             {isEquitySelected && (
               <Line
                 type="stepAfter"
@@ -320,30 +320,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 dot={false}
                 strokeWidth={2}
                 isAnimationActive={false}
-              />
-            )}
-
-            {showPnLSubgraph && (
-              <Line
-                type="stepAfter"
-                dataKey="pnl"
-                name="P&L"
-                stroke="transparent"
-                yAxisId="dollar"
-                dot={false}
-                strokeWidth={0}
-                isAnimationActive={false}
-              />
-            )}
-
-            {/* Add zero reference line when PnL is shown in main chart */}
-            {(onlyPnl || showPnLSubgraph) && (
-              <ReferenceLine
-                y={0}
-                yAxisId="dollar"
-                stroke="#666"
-                strokeDasharray="3 3"
-                opacity={0.5}
               />
             )}
           </LineChart>
