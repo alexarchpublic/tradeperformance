@@ -29,8 +29,6 @@ const Track = React.forwardRef<HTMLSpanElement, TrackProps>(
     } | null>(null);
 
     const handleMouseDown = (e: React.MouseEvent) => {
-      const target = e.target as HTMLElement;
-      
       // Ignore clicks on or near the thumbs
       const thumbElements = document.querySelectorAll('[role="slider"]');
       const clickX = e.clientX;
