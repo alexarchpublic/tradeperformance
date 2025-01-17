@@ -44,9 +44,9 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-between px-4 mb-4">
+        <div className="relative flex items-center justify-center px-4 mb-4">
           <h1 className="text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
-          <div className="flex items-center pl-8">
+          <div className="absolute right-4 flex items-center">
             <img 
               src="/ArchPublicLogo.png" 
               alt="Arch Public Logo" 
