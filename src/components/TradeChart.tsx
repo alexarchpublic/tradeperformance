@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceArea,
 } from "recharts";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -27,15 +26,6 @@ type DateRange = {
   start: number;
   end: number;
 } | null;
-
-// Add type for chart mouse events
-interface ChartMouseEvent {
-  activeLabel?: string;
-  activePayload?: Array<{
-    value: number;
-    payload: EquityCurvePoint;
-  }>;
-}
 
 const METRIC_COLORS = {
   equity: "#22c55e",
