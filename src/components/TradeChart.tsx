@@ -206,7 +206,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
         <ResponsiveContainer>
           <div className="flex flex-col h-full">
             <div className={showPnLSubgraph ? "h-2/3" : "h-full"}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={visibleData}
                   margin={getChartMargins(true)}
@@ -306,7 +306,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
             {showPnLSubgraph && (
               <div className="h-1/3">
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={visibleData}
                     margin={getChartMargins(false)}
@@ -331,19 +331,24 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                         style: { textAnchor: "middle", fontSize: 12 },
                       }}
                     />
-                    <Tooltip
-                      content={() => null}
-                      cursor={{ stroke: "#666", strokeWidth: 1 }}
-                    />
                     <Line
                       type="stepAfter"
                       dataKey="pnl"
                       name="P&L"
                       stroke={METRIC_COLORS.pnl}
                       dot={false}
-                      activeDot={{ r: 6 }}
+                      activeDot={false}
                       strokeWidth={2}
                       isAnimationActive={false}
+                    />
+                    {/* Only show cursor in subgraph, no tooltip */}
+                    <Tooltip
+                      content={() => null}
+                      cursor={{
+                        stroke: "#666",
+                        strokeWidth: 1,
+                        strokeDasharray: "3 3"
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
