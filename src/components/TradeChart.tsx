@@ -11,7 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, memo } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
@@ -237,7 +237,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   }
 
   // Create a custom tooltip for the subgraph that updates shared state
-  function SubgraphTooltip({
+  const SubgraphTooltip = memo(function SubgraphTooltip({
     active,
     label,
     payload,
@@ -248,13 +248,11 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
           date: label as string,
           pnl: payload[0].value as number,
         });
-      } else {
-        setTooltipData({ date: null, pnl: null });
       }
     }, [active, label, payload]);
 
     return null;
-  }
+  });
 
   return (
     <div className="w-full h-[600px] flex flex-col">
