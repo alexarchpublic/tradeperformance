@@ -1,4 +1,6 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import * as React from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import { cn } from "@/lib/utils";
 
 interface RangeSliderProps {
   value: [number, number];
@@ -9,151 +11,38 @@ interface RangeSliderProps {
   className?: string;
 }
 
-export function RangeSlider({ 
-  value, 
+export function RangeSlider({
+  value,
   onChange,
   min = 0,
   max = 100,
   step = 0.1,
-  className = ''
+  className = "",
 }: RangeSliderProps) {
-  const dragRef = useRef<{
-    active: boolean;
-    startX: number;
-    range: [number, number];
-    handle?: 'left' | 'right';
-    containerWidth?: number;
-    rangePerPixel?: number;
-  }>({
-    active: false,
-    startX: 0,
-    range: [0, 0]
-  });
-  
-  const windowSize = value[1] - value[0];
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const drag = dragRef.current;
-    if (!drag.active || !drag.containerWidth || !drag.rangePerPixel) return;
-
-    const dx = e.clientX - drag.startX;
-    const rangeDelta = dx * drag.rangePerPixel;
-
-    if (drag.handle === 'left') {
-      const newStart = Math.max(min, Math.min(drag.range[0] + rangeDelta, value[1] - step));
-      onChange([newStart, value[1]]);
-    } else if (drag.handle === 'right') {
-      const newEnd = Math.max(value[0] + step, Math.min(drag.range[1] + rangeDelta, max));
-      onChange([value[0], newEnd]);
-    } else {
-      let newStart = drag.range[0] + rangeDelta;
-      let newEnd = drag.range[1] + rangeDelta;
-      
-      if (newStart < min) {
-        newStart = min;
-        newEnd = min + windowSize;
-      }
-      if (newEnd > max) {
-        newEnd = max;
-        newStart = max - windowSize;
-      }
-      
-      onChange([newStart, newEnd]);
-    }
-  }, [min, max, step, windowSize, value, onChange]);
-
-  const handleMouseUp = useCallback(() => {
-    if (dragRef.current.active) {
-      dragRef.current.active = false;
-      document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    }
-  }, [handleMouseMove]);
-
-  const startDragging = useCallback((e: MouseEvent | React.MouseEvent, handle?: 'left' | 'right') => {
-    const container = (e.target as Element).closest('.slider-container');
-    if (!container) return;
-
-    // Prevent text selection during drag
-    document.body.style.userSelect = 'none';
-
-    dragRef.current = {
-      active: true,
-      startX: e.clientX,
-      range: [...value] as [number, number],
-      handle,
-      containerWidth: container.clientWidth,
-      rangePerPixel: (max - min) / container.clientWidth
-    };
-
-    // Add window-level event listeners
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    e.stopPropagation();
-    e.preventDefault();
-  }, [value, min, max, handleMouseMove, handleMouseUp]);
-
-  const handleTrackMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as Element;
-    // Only start dragging if clicking directly on the track (not handles)
-    if (target.closest('.slider-track') && !target.closest('.handle')) {
-      startDragging(e);
-    }
-  };
-
-  const handleHandleMouseDown = (e: React.MouseEvent, handle: 'left' | 'right') => {
-    startDragging(e, handle);
-  };
-
-  // Cleanup event listeners on unmount
-  useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-    };
-  }, [handleMouseMove, handleMouseUp]);
-
-  const leftPosition = ((value[0] - min) / (max - min)) * 100;
-  const rightPosition = ((value[1] - min) / (max - min)) * 100;
-  const width = rightPosition - leftPosition;
-
   return (
-    <div className={`px-4 slider-container ${className}`}>
-      <div 
-        className="relative w-full h-2 bg-gray-200 rounded-full slider-track"
-        onMouseDown={handleTrackMouseDown}
-      >
-        <div
-          className={`absolute h-full bg-blue-500 rounded-full
-            ${dragRef.current.active ? 'cursor-grabbing' : 'cursor-grab'}`}
-          style={{
-            left: `${leftPosition}%`,
-            width: `${width}%`,
-            willChange: 'left, width'
-          }}
-        />
-        <div
-          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
-          style={{ 
-            left: `${leftPosition}%`,
-            willChange: 'left',
-            zIndex: 1
-          }}
-          onMouseDown={(e) => handleHandleMouseDown(e, 'left')}
-        />
-        <div
-          className="handle absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-ew-resize -translate-x-1/2 -translate-y-1/4"
-          style={{ 
-            left: `${rightPosition}%`,
-            willChange: 'left',
-            zIndex: 1
-          }}
-          onMouseDown={(e) => handleHandleMouseDown(e, 'right')}
-        />
-      </div>
-    </div>
+    <SliderPrimitive.Root
+      className={cn(
+        "relative flex w-full touch-none select-none items-center",
+        className
+      )}
+      value={value}
+      onValueChange={onChange}
+      min={min}
+      max={max}
+      step={step}
+      minStepsBetweenThumbs={1}
+    >
+      <SliderPrimitive.Track className="relative h-2 w-full grow rounded-full bg-gray-200">
+        <SliderPrimitive.Range className="absolute h-full rounded-full bg-blue-500" />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb
+        className="block h-4 w-4 rounded-full border-2 border-blue-500 bg-white focus:outline-none focus-visible:ring focus-visible:ring-blue-500 focus-visible:ring-opacity-75 disabled:pointer-events-none disabled:opacity-50"
+        aria-label="Left handle"
+      />
+      <SliderPrimitive.Thumb
+        className="block h-4 w-4 rounded-full border-2 border-blue-500 bg-white focus:outline-none focus-visible:ring focus-visible:ring-blue-500 focus-visible:ring-opacity-75 disabled:pointer-events-none disabled:opacity-50"
+        aria-label="Right handle"
+      />
+    </SliderPrimitive.Root>
   );
 } 
