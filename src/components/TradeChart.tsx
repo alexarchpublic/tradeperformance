@@ -11,7 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
@@ -107,6 +107,9 @@ function CustomMainTooltip({
 }
 
 export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
+  const mainChartRef = useRef<HTMLDivElement>(null);
+  const [activeWidth, setActiveWidth] = useState<number | undefined>();
+
   // Track the visible range [startIndex, endIndex] with your custom RangeSlider
   const [rangeValues, setRangeValues] = useState<[number, number]>([
     0,
@@ -128,6 +131,27 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const onlyPnl = isPnLSelected && selectedMetrics.length === 1;
   // Show subgraph for PnL if PnL is selected AND at least one other metric is selected
   const showPnLSubgraph = isPnLSelected && (isEquitySelected || isDrawdownSelected);
+
+  // Update active width when main chart changes
+  useEffect(() => {
+    const updateWidth = () => {
+      if (mainChartRef.current) {
+        // Get the chart container
+        const chartContainer = mainChartRef.current.querySelector('.recharts-wrapper');
+        if (chartContainer) {
+          // Get the plot area (excluding axes)
+          const plotArea = chartContainer.querySelector('.recharts-plot-area');
+          if (plotArea) {
+            setActiveWidth(plotArea.getBoundingClientRect().width);
+          }
+        }
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, [isDrawdownSelected]); // Re-measure when drawdown axis changes
 
   // Calculate domains for the main chart & subgraph
   function calculateDomains() {
@@ -183,7 +207,10 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   return (
     <div className="w-full h-[600px] flex flex-col">
       {/* Main chart container - adjust height based on subgraph presence */}
-      <div className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}>
+      <div 
+        ref={mainChartRef}
+        className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={visibleData}
@@ -306,7 +333,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
       {/* PnL Subgraph */}
       {showPnLSubgraph && (
         <div className="h-[25%] mb-2">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width={activeWidth ? `${activeWidth}px` : "100%"} height="100%">
             <LineChart
               data={visibleData}
               margin={getChartMargins(isDrawdownSelected, true)}
