@@ -204,10 +204,19 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
       dollarMin = minPnL - pnlPad;
       dollarMax = maxPnL + pnlPad;
     } else if (isEquitySelected) {
-      // Otherwise, if equity is selected => main chart is Equity
-      // For equity, ensure we never go below 0 unless the actual values do
-      dollarMin = Math.min(minEquity - equityPad, minEquity * 0.98);
-      dollarMax = maxEquity + equityPad;
+      // For equity, only consider equity values when PnL is in subgraph
+      if (showPnLSubgraph) {
+        dollarMin = Math.min(minEquity - equityPad, minEquity * 0.98);
+        dollarMax = maxEquity + equityPad;
+      } else {
+        // When no subgraph, consider both equity and PnL values for the domain
+        const minVal = Math.min(minEquity, minPnL);
+        const maxVal = Math.max(maxEquity, maxPnL);
+        const magnitude = Math.max(Math.abs(maxVal), Math.abs(minVal));
+        const pad = Math.max(magnitude * 0.02, 500);
+        dollarMin = Math.min(minVal - pad, minVal * 0.98);
+        dollarMax = maxVal + pad;
+      }
     } else {
       // e.g., if user only picks drawdown => main axis is 0..0
       dollarMin = 0;
