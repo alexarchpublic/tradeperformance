@@ -120,7 +120,6 @@ export default function Home() {
           <TradeChart
             data={{ equityCurve: chartData.equityCurve }}
             selectedMetrics={selectedMetrics}
-            hoveredTradeIndex={hoveredTradeIndex}
           />
         )}
       </div>
