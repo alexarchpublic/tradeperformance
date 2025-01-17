@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  TooltipProps,
 } from "recharts";
 import { format } from "date-fns";
 import { useState, useCallback } from "react";
@@ -27,6 +28,18 @@ type DateRange = {
   end: number;
 } | null;
 
+interface TooltipPayload {
+  value: number;
+  name: string;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
 const METRIC_COLORS = {
   equity: "#22c55e",
   pnl: "#3b82f6",
@@ -36,7 +49,6 @@ const METRIC_COLORS = {
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 100]);
-  const [activeTooltipData, setActiveTooltipData] = useState<any>(null);
 
   // Identify which metrics are selected
   const isEquitySelected = selectedMetrics.includes("equity");
@@ -139,22 +151,13 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
-  // Sync tooltips between charts
-  const handleMainChartMouseMove = useCallback((e: any) => {
-    if (e.isTooltipActive) {
-      setActiveTooltipData(e.activePayload);
-    } else {
-      setActiveTooltipData(null);
-    }
-  }, []);
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (!active || !payload?.length) return null;
 
     return (
       <div className="bg-white p-3 border rounded shadow-lg">
-        <p className="text-gray-600 mb-2">{format(new Date(label), "MMM d, yyyy HH:mm")}</p>
-        {payload.map((item: any, index: number) => (
+        <p className="text-gray-600 mb-2">{label ? format(new Date(label), "MMM d, yyyy HH:mm") : ""}</p>
+        {payload.map((item, index) => (
           <p key={index} style={{ color: item.color }} className="whitespace-nowrap">
             {item.name}: {item.name.includes("Drawdown") ? formatPercent(item.value) : formatDollar(item.value)}
           </p>
@@ -162,17 +165,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       </div>
     );
   };
-
-  // Debug logging
-  console.debug("TradeChart state:", {
-    hoveredTradeIndex,
-    visibleDataLength: visibleData.length,
-    totalDataLength: data.equityCurve.length,
-    selectedMetrics,
-    onlyPnl,
-    showPnLSubgraph,
-    dateRange,
-  });
 
   return (
     <div className="w-full h-[600px] relative">
@@ -184,7 +176,6 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 <LineChart
                   data={visibleData}
                   margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
-                  onMouseMove={handleMainChartMouseMove}
                   syncId="tradingCharts"
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
