@@ -182,51 +182,43 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     const pnlVals = visibleData.map((d) => d.pnl);
     const ddVals = visibleData.map((d) => d.drawdown);
 
-    const maxEquity = Math.max(...eqVals);
-    const minEquity = Math.min(...eqVals);
-    // Calculate padding based on the magnitude of the values
-    const equityMagnitude = Math.max(Math.abs(maxEquity), Math.abs(minEquity));
-    const equityPad = Math.max(equityMagnitude * 0.02, 500); // 2% of magnitude or $500 minimum
+    // Simple percentage-based padding for all metrics
+    const PADDING_PERCENT = 0.05; // 5% padding
 
+    // Calculate PnL domain
     const maxPnL = Math.max(...pnlVals, 0);
     const minPnL = Math.min(...pnlVals, 0);
-    const pnlMagnitude = Math.max(Math.abs(maxPnL), Math.abs(minPnL));
-    const pnlPad = Math.max(pnlMagnitude * 0.05, 250); // 5% of magnitude or $250 minimum
+    const pnlRange = maxPnL - minPnL;
+    const pnlPad = Math.max(pnlRange * PADDING_PERCENT, 100);
+    const pnlDomain = [minPnL - pnlPad, maxPnL + pnlPad] as [number, number];
 
+    // Calculate drawdown domain
     const minDD = Math.min(...ddVals);
-    const ddPad = Math.max(Math.abs(minDD) * 0.05, 0.5); // 5% of magnitude or 0.5% minimum
+    const ddPad = Math.max(Math.abs(minDD) * PADDING_PERCENT, 0.5);
+    const drawdownDomain = [minDD - ddPad, 0] as [number, number];
 
-    let dollarMin: number;
-    let dollarMax: number;
-
-    // If only PnL is selected => main chart uses PnL domain
+    // Calculate dollar domain (for equity or PnL in main chart)
+    let dollarDomain: [number, number];
+    
     if (onlyPnl) {
-      dollarMin = minPnL - pnlPad;
-      dollarMax = maxPnL + pnlPad;
+      // When only PnL is selected, use PnL domain
+      dollarDomain = pnlDomain;
     } else if (isEquitySelected) {
-      // For equity, only consider equity values when PnL is in subgraph
-      if (showPnLSubgraph) {
-        dollarMin = Math.min(minEquity - equityPad, minEquity * 0.98);
-        dollarMax = maxEquity + equityPad;
-      } else {
-        // When no subgraph, consider both equity and PnL values for the domain
-        const minVal = Math.min(minEquity, minPnL);
-        const maxVal = Math.max(maxEquity, maxPnL);
-        const magnitude = Math.max(Math.abs(maxVal), Math.abs(minVal));
-        const pad = Math.max(magnitude * 0.02, 500);
-        dollarMin = Math.min(minVal - pad, minVal * 0.98);
-        dollarMax = maxVal + pad;
-      }
+      // For equity chart
+      const maxEquity = Math.max(...eqVals);
+      const minEquity = Math.min(...eqVals);
+      const equityRange = maxEquity - minEquity;
+      const equityPad = equityRange * PADDING_PERCENT;
+      dollarDomain = [minEquity - equityPad, maxEquity + equityPad];
     } else {
-      // e.g., if user only picks drawdown => main axis is 0..0
-      dollarMin = 0;
-      dollarMax = 0;
+      // Fallback
+      dollarDomain = [0, 0];
     }
 
     return {
-      dollarDomain: [dollarMin, dollarMax] as [number, number],
-      pnlDomain: [minPnL - pnlPad, maxPnL + pnlPad] as [number, number],
-      drawdownDomain: [minDD - ddPad, 0] as [number, number],
+      dollarDomain,
+      pnlDomain,
+      drawdownDomain,
     };
   }
 
