@@ -33,7 +33,7 @@ const METRIC_COLORS = {
  * the main chart and subgraph have the same width, keeping hover lines aligned.
  */
 function getChartMargins(isDrawdownSelected: boolean, isSubgraph: boolean) {
-  const rightMargin = isDrawdownSelected ? 70 : 20;
+  const rightMargin = isDrawdownSelected ? 90 : 20;
   return {
     top: 20,
     right: rightMargin,
@@ -223,6 +223,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 domain={drawdownDomain}
                 tick={{ fontSize: 12 }}
                 tickFormatter={(value) => `${value.toFixed(1)}%`}
+                width={90}
                 label={{
                   value: "Peak to Peak Drawdown (%)",
                   angle: 90,
@@ -333,7 +334,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   orientation="right"
                   domain={[0, 1]}
                   hide={true}
-                  width={70}
+                  width={90}
                 />
               )}
               <Tooltip content={() => null} />
