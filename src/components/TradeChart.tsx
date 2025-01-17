@@ -108,7 +108,6 @@ function CustomMainTooltip({
 
 export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const mainChartRef = useRef<HTMLDivElement>(null);
-  const [activeWidth, setActiveWidth] = useState<number | undefined>();
 
   // Track the visible range [startIndex, endIndex] with your custom RangeSlider
   const [rangeValues, setRangeValues] = useState<[number, number]>([
@@ -132,7 +131,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   // Show subgraph for PnL if PnL is selected AND at least one other metric is selected
   const showPnLSubgraph = isPnLSelected && (isEquitySelected || isDrawdownSelected);
 
-  // Update active width when main chart changes
+  // Update plot area width when main chart changes
   useEffect(() => {
     const updateWidth = () => {
       if (mainChartRef.current) {
@@ -143,7 +142,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
           const plotArea = chartContainer.querySelector('.recharts-plot-area');
           if (plotArea) {
             const width = plotArea.getBoundingClientRect().width;
-            setActiveWidth(width);
             
             // Find and update the subgraph plot area width
             const subgraphPlot = document.querySelector('.pnl-subgraph .recharts-plot-area');
