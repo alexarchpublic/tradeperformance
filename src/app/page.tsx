@@ -44,13 +44,15 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-between px-4 mb-4">
           <h1 className="text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
-          <img 
-            src="/ArchPublicLogo.png" 
-            alt="Arch Public Logo" 
-            className="h-12 w-auto"
-          />
+          <div className="flex items-center pl-8">
+            <img 
+              src="/ArchPublicLogo.png" 
+              alt="Arch Public Logo" 
+              className="h-12 w-auto"
+            />
+          </div>
         </div>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
           Analyze your trading performance by selecting algorithms and adjusting units. Start by choosing your algorithms below, 
