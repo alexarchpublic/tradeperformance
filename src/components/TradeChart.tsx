@@ -322,6 +322,21 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 isAnimationActive={false}
               />
             )}
+
+            {/* Add invisible PnL line for tooltip data when showing subgraph */}
+            {showPnLSubgraph && (
+              <Line
+                type="stepAfter"
+                dataKey="pnl"
+                name="P&L"
+                stroke="none"
+                yAxisId="dollar"
+                dot={false}
+                strokeWidth={0}
+                isAnimationActive={false}
+                style={{ display: 'none' }}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
