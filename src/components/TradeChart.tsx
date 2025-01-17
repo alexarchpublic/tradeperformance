@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 import { RangeSlider } from "@/components/ui/range-slider";
 
@@ -36,6 +36,7 @@ const METRIC_COLORS = {
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 100]);
+  const [activeTooltipData, setActiveTooltipData] = useState<any>(null);
 
   // Identify which metrics are selected
   const isEquitySelected = selectedMetrics.includes("equity");
@@ -138,6 +139,30 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
+  // Sync tooltips between charts
+  const handleMainChartMouseMove = useCallback((e: any) => {
+    if (e.isTooltipActive) {
+      setActiveTooltipData(e.activePayload);
+    } else {
+      setActiveTooltipData(null);
+    }
+  }, []);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+
+    return (
+      <div className="bg-white p-3 border rounded shadow-lg">
+        <p className="text-gray-600 mb-2">{format(new Date(label), "MMM d, yyyy HH:mm")}</p>
+        {payload.map((item: any, index: number) => (
+          <p key={index} style={{ color: item.color }} className="whitespace-nowrap">
+            {item.name}: {item.name.includes("Drawdown") ? formatPercent(item.value) : formatDollar(item.value)}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
   // Debug logging
   console.debug("TradeChart state:", {
     hoveredTradeIndex,
@@ -159,6 +184,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                 <LineChart
                   data={visibleData}
                   margin={{ top: 20, right: 70, bottom: 60, left: 70 }}
+                  onMouseMove={handleMainChartMouseMove}
+                  syncId="tradingCharts"
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                   <XAxis
@@ -200,16 +227,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   )}
 
                   <Tooltip
-                    trigger="hover"
-                    formatter={(value: number, name: string) => {
-                      if (name === "Peak to Peak Drawdown") {
-                        return [formatPercent(value), name];
-                      }
-                      return [formatDollar(value), name];
-                    }}
-                    labelFormatter={(label) =>
-                      format(new Date(label), "MMM d, yyyy HH:mm")
-                    }
+                    content={<CustomTooltip />}
+                    cursor={{ stroke: "#666", strokeWidth: 1 }}
                   />
 
                   {/* EQUITY LINE */}
@@ -266,6 +285,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                   <LineChart
                     data={visibleData}
                     margin={{ top: 20, right: 70, bottom: 30, left: 70 }}
+                    syncId="tradingCharts"
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                     <XAxis
@@ -287,9 +307,8 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
                       }}
                     />
                     <Tooltip
-                      trigger="hover"
-                      formatter={(value: number) => [formatDollar(value), "P&L"]}
-                      labelFormatter={(label) => format(new Date(label), "MMM d, yyyy HH:mm")}
+                      content={<CustomTooltip />}
+                      cursor={{ stroke: "#666", strokeWidth: 1 }}
                     />
                     <Line
                       type="stepAfter"
