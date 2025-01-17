@@ -58,16 +58,7 @@ interface CustomMainTooltipProps {
 
 export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const mainChartRef = useRef<HTMLDivElement>(null);
-  // Add state for shared tooltip data
-  const [tooltipData, setTooltipData] = useState<{
-    date: string | null;
-    pnl: number | null;
-  }>({
-    date: null,
-    pnl: null,
-  });
-
-  // Track the visible range [startIndex, endIndex] with your custom RangeSlider
+  // Remove shared tooltip state
   const [rangeValues, setRangeValues] = useState<[number, number]>([
     0,
     data.equityCurve.length - 1,
@@ -192,10 +183,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
     const equityItem = payload.find((p) => p.name === "Account Value");
     const drawdownItem = payload.find((p) => p.name === "Peak to Peak Drawdown");
-    // Use PnL from shared state when subgraph is shown, otherwise from payload
-    const pnlValue = showPnLSubgraph ? 
-      (tooltipData.date === label ? tooltipData.pnl : null) : 
-      payload.find((p) => p.name === "P&L")?.value;
+    const pnlItem = payload.find((p) => p.name === "P&L");
 
     const formatDollar = (val: number) =>
       new Intl.NumberFormat("en-US", {
@@ -226,43 +214,19 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
             <span>{formatPercent(drawdownItem.value ?? 0)}</span>
           </div>
         )}
-        {pnlValue !== null && pnlValue !== undefined && (
+        {pnlItem && isPnLSelected && (
           <div className="flex items-center justify-between">
             <span className="text-blue-600 mr-4">P&L:</span>
-            <span>{formatDollar(pnlValue)}</span>
+            <span>{formatDollar(pnlItem.value ?? 0)}</span>
           </div>
         )}
       </div>
     );
   }
 
-  // Create a custom tooltip for the subgraph that updates shared state
-  const SubgraphTooltip = memo(function SubgraphTooltip({
-    active,
-    label,
-    payload,
-  }: CustomMainTooltipProps) {
-    // Only update tooltip data when active and payload changes
-    useEffect(() => {
-      if (!active) {
-        setTooltipData({ date: null, pnl: null });
-        return;
-      }
-      
-      if (payload?.[0]?.value !== undefined) {
-        setTooltipData({
-          date: label as string,
-          pnl: payload[0].value as number,
-        });
-      }
-    }, [active, label, payload?.[0]?.value]);
-
-    return null;
-  });
-
   return (
     <div className="w-full h-[600px] flex flex-col">
-      {/* Main chart container - adjust height based on subgraph presence */}
+      {/* Main chart container */}
       <div 
         ref={mainChartRef}
         className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}
@@ -340,15 +304,18 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               />
             )}
 
+            {/* Invisible PnL line for tooltip data */}
             {showPnLSubgraph && (
               <Line
+                type="stepAfter"
                 dataKey="pnl"
                 name="P&L"
-                yAxisId="pnlHidden"
                 stroke="transparent"
-                strokeWidth={0}
+                yAxisId="dollar"
                 dot={false}
+                strokeWidth={0}
                 isAnimationActive={false}
+                style={{ display: 'none' }}
               />
             )}
 
@@ -359,6 +326,19 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                 name="P&L"
                 stroke={METRIC_COLORS.pnl}
                 yAxisId="dollar"
+                dot={false}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
+
+            {isDrawdownSelected && (
+              <Line
+                type="stepAfter"
+                dataKey="drawdown"
+                name="Peak to Peak Drawdown"
+                stroke={METRIC_COLORS.drawdown}
+                yAxisId="drawdown"
                 dot={false}
                 strokeWidth={2}
                 isAnimationActive={false}
@@ -377,7 +357,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               data={visibleData}
               margin={getChartMargins(isDrawdownSelected, true)}
               syncId="trading-charts"
-              onMouseLeave={() => setTooltipData({ date: null, pnl: null })}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
@@ -421,7 +400,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   width={90}
                 />
               )}
-              <Tooltip content={<SubgraphTooltip />} />
               <Line
                 type="stepAfter"
                 dataKey="pnl"
