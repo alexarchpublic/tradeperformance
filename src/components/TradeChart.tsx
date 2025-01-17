@@ -242,14 +242,20 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     label,
     payload,
   }: CustomMainTooltipProps) {
+    // Only update tooltip data when active and payload changes
     useEffect(() => {
-      if (active && payload?.[0]) {
+      if (!active) {
+        setTooltipData({ date: null, pnl: null });
+        return;
+      }
+      
+      if (payload?.[0]?.value !== undefined) {
         setTooltipData({
           date: label as string,
           pnl: payload[0].value as number,
         });
       }
-    }, [active, label, payload]);
+    }, [active, label, payload?.[0]?.value]);
 
     return null;
   });
