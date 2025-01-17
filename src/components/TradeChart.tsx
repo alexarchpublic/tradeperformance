@@ -196,7 +196,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
               tick={{ fontSize: 12 }}
               padding={{ left: 20, right: 20 }}
-              hide={showPnLSubgraph}
             />
             <YAxis
               yAxisId="dollar"
