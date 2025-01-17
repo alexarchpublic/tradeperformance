@@ -40,7 +40,8 @@ const METRIC_COLORS = {
 
 export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>(null);
-  const showPnLSubgraph = selectedMetrics.includes("equity") && selectedMetrics.includes("pnl");
+  const showPnLSubgraph =
+    selectedMetrics.includes("equity") && selectedMetrics.includes("pnl");
 
   const getVisibleData = () => {
     if (!dateRange || !data.equityCurve.length) {
@@ -67,6 +68,14 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
 
   const calculateDomains = () => {
     const visibleData = getVisibleData();
+    if (!visibleData.length) {
+      return {
+        dollarDomain: [0, 0],
+        pnlDomain: [0, 0],
+        drawdownDomain: [0, 0],
+      };
+    }
+
     const equityValues = visibleData.map((d) => d.equity);
     const pnlValues = visibleData.map((d) => d.pnl);
     const drawdownValues = visibleData.map((d) => d.drawdown);
@@ -94,9 +103,11 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
       selectedMetrics.includes("pnl") &&
       !showPnLSubgraph
     ) {
+      // If both selected but not subgraph, we combine them on one scale
       dollarMin = Math.min(minEquity - equityPadding, minPnL - pnlPadding);
       dollarMax = Math.max(maxEquity + equityPadding, maxPnL + pnlPadding);
     } else {
+      // Default to equity domain
       dollarMin = minEquity - equityPadding;
       dollarMax = maxEquity + equityPadding;
     }
@@ -124,7 +135,7 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
     return `${value.toFixed(2)}%`;
   };
 
-  // Log helpful info
+  // Debugging logs
   console.debug("TradeChart state:", {
     hoveredTradeIndex,
     visibleDataLength: visibleData.length,
@@ -134,9 +145,9 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
   });
 
   return (
-    <div className="w-full h-[600px] flex flex-col">
-      {/* Top chart (equity & drawdown) */}
-      <div className={showPnLSubgraph ? "h-2/3" : "h-full"}>
+    <div className="w-full flex flex-col space-y-4">
+      {/* Top chart => equity & drawdown */}
+      <div className={!showPnLSubgraph ? "h-96" : "h-64"}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={visibleData}
@@ -227,14 +238,15 @@ export function TradeChart({ data, selectedMetrics, hoveredTradeIndex }: TradeCh
               travellerWidth={8}
               alwaysShowText={true}
               gap={5}
+              // IMPORTANT: no startIndex / endIndex so it can move
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Bottom chart (PnL subgraph) */}
+      {/* Bottom chart => PnL subgraph */}
       {showPnLSubgraph && (
-        <div className="h-1/3">
+        <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={visibleData}
