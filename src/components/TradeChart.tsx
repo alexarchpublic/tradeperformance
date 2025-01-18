@@ -39,7 +39,7 @@ function getChartMargins(isDrawdownSelected: boolean, isSubgraph: boolean) {
     top: 20,
     right: rightMargin,
     bottom: isSubgraph ? 30 : 60,
-    left: 70,
+    left: window?.innerWidth < 768 ? 50 : 70,
   };
 }
 
@@ -240,8 +240,11 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
               dataKey="date"
-              tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
-              tick={{ fontSize: 12 }}
+              tickFormatter={(date) => {
+                const formatted = format(new Date(date), window?.innerWidth < 768 ? "MMM d" : "MMM d, yyyy");
+                return formatted;
+              }}
+              tick={{ fontSize: window?.innerWidth < 768 ? 10 : 12 }}
               padding={{ left: 20, right: 20 }}
               hide={showPnLSubgraph}
             />
@@ -249,19 +252,22 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
               yAxisId="dollar"
               orientation="left"
               domain={dollarDomain}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              }).format(value)}
+              tick={{ fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+              tickFormatter={(value) => {
+                const formatted = new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(value);
+                return window?.innerWidth < 768 ? formatted.replace('$', '') : formatted;
+              }}
               label={{
-                value: onlyPnl ? "Trade P&L ($)" : "Account Value ($)",
+                value: onlyPnl ? "P&L ($)" : "Value ($)",
                 angle: -90,
                 position: "insideLeft",
-                offset: -50,
-                style: { textAnchor: "middle", fontSize: 12 },
+                offset: window?.innerWidth < 768 ? -35 : -50,
+                style: { textAnchor: "middle", fontSize: window?.innerWidth < 768 ? 10 : 12 },
               }}
             />
             {showPnLSubgraph && (

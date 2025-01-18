@@ -46,8 +46,8 @@ export default function Home() {
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
         <div className="relative flex items-center justify-center px-4 mb-4">
-          <h1 className="text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
-          <div className="absolute right-4 flex items-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
+          <div className="absolute right-4 hidden md:flex items-center">
             <Image 
               src="/ArchPublicLogo.png" 
               alt="Arch Public Logo" 
@@ -59,18 +59,18 @@ export default function Home() {
             />
           </div>
         </div>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+        <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto px-4">
           Analyze your trading performance by selecting algorithms and adjusting units. Start by choosing your algorithms below, 
-          then optionally set a start date to filter the data. The statistics and charts will update automatically as you make changes.
+          then optionally set a start date to filter the data.
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-4 px-4">
         <div className="flex-grow">
           <AlgorithmSelector onAlgorithmsChange={handleAlgorithmsChange} />
         </div>
-        <div className="flex gap-4 items-end">
-          <div>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+          <div className="w-full md:w-auto">
             <label className="block text-sm font-medium text-gray-500 mb-2">
               Start Date
             </label>
@@ -80,7 +80,7 @@ export default function Home() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
             />
           </div>
-          <Button variant="outline" onClick={handleResetDate}>
+          <Button variant="outline" onClick={handleResetDate} className="w-full md:w-auto">
             Reset Date
           </Button>
         </div>
@@ -88,34 +88,34 @@ export default function Home() {
 
       {/* Stats Boxes */}
       {chartData && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Total Trades</h3>
-            <p className="text-2xl font-bold">{chartData.metadata.totalTrades}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 px-4">
+          <div className="bg-white p-3 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500">Total Trades</h3>
+            <p className="text-lg md:text-2xl font-bold">{chartData.metadata.totalTrades}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Win Rate</h3>
-            <p className="text-2xl font-bold">{(chartData.metadata.winRate * 100).toFixed(1)}%</p>
+          <div className="bg-white p-3 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500">Win Rate</h3>
+            <p className="text-lg md:text-2xl font-bold">{(chartData.metadata.winRate * 100).toFixed(1)}%</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Total PnL</h3>
+          <div className="bg-white p-3 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500">Total PnL</h3>
             <div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-lg md:text-2xl font-bold text-green-600">
                 ${Math.round(chartData.metadata.totalPnL).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               </p>
-              <p className="text-sm font-medium text-green-600">
+              <p className="text-xs md:text-sm font-medium text-green-600">
                 {chartData.metadata.pnlPercent.toFixed(1)}%
               </p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Max Drawdown</h3>
+          <div className="bg-white p-3 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500">Max Drawdown</h3>
             <div>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-lg md:text-2xl font-bold text-red-600">
                 ${Math.round(chartData.metadata.maxDrawdownDollars).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               </p>
               <div className="flex flex-col">
-                <p className="text-sm font-medium text-red-600">
+                <p className="text-xs md:text-sm font-medium text-red-600">
                   {chartData.metadata.maxDrawdownPercent.toFixed(1)}%
                 </p>
               </div>
@@ -125,9 +125,9 @@ export default function Home() {
       )}
 
       {/* Chart Section */}
-      <div className="bg-white p-6 rounded-lg shadow mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Performance Chart</h2>
+      <div className="bg-white p-3 md:p-6 rounded-lg shadow mb-8 mx-2 md:mx-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-xl md:text-2xl font-bold">Performance Chart</h2>
           <MetricsSelector selectedMetrics={selectedMetrics} onMetricsChange={setSelectedMetrics} />
         </div>
         {chartData && chartData.equityCurve && (
