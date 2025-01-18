@@ -11,7 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
-import { useMemo, useState, useRef, useEffect, memo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
