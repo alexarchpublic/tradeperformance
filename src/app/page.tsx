@@ -45,10 +45,8 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-between px-4 mb-4 relative">
-          <div className="w-full md:w-auto flex justify-center md:justify-start">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
-          </div>
+        <div className="container max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
           <div className="hidden md:block">
             <Image 
               src="/ArchPublicLogo.png" 
