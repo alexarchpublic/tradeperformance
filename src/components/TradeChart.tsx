@@ -334,7 +334,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
 
             {isDrawdownSelected && (
               <Line
-                type="stepAfter"
+                type="linear"
                 dataKey="drawdown"
                 name="Peak to Peak Drawdown"
                 stroke={METRIC_COLORS.drawdown}
