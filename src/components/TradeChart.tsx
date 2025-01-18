@@ -400,6 +400,10 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   width={90}
                 />
               )}
+              <Tooltip
+                content={() => null}  // No tooltip content, just the vertical line
+                cursor={{ stroke: '#666', strokeWidth: 1 }}
+              />
               <Line
                 type="stepAfter"
                 dataKey="pnl"
