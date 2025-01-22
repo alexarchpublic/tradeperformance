@@ -45,11 +45,11 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-          <div className="flex-1 text-center md:text-left">
+        <div className="relative w-full">
+          <div className="text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Trade Performance Analytics</h1>
           </div>
-          <div className="hidden md:block flex-shrink-0">
+          <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
             <Image 
               src="/ArchPublicLogo.png" 
               alt="Arch Public Logo" 
