@@ -1,50 +1,53 @@
-import { useEffect, useState } from 'react'
-import Papa from 'papaparse'
+import { useMemo } from "react";
+import { format, parseISO, startOfMonth } from "date-fns";
+import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
-interface EquityDataPoint {
-  date: string
-  equity: number
+export interface CohortData {
+  startDate: string;
+  data: Array<{
+    day: number;
+    equity: number;
+    velocity: number;
+  }>;
 }
 
-export function useCohortData() {
-  const [data, setData] = useState<EquityDataPoint[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const files = [
-          '/data/strategy1.csv',
-          '/data/strategy2.csv',
-          '/data/strategy3.csv',
-          '/data/strategy4.csv'
-        ]
-
-        const allData: EquityDataPoint[] = []
-        
-        for (const file of files) {
-          const response = await fetch(file)
-          const csv = await response.text()
-          
-          Papa.parse<EquityDataPoint>(csv, {
-            header: true,
-            dynamicTyping: true,
-            complete: (results) => {
-              allData.push(...results.data.filter(d => d.date && d.equity))
-            }
-          })
-        }
-
-        setData(allData)
-      } catch (error) {
-        console.error('Error loading data:', error)
-      } finally {
-        setLoading(false)
+export function useCohortData(equityCurve: EquityCurvePoint[]) {
+  return useMemo(() => {
+    const cohortsMap = new Map<string, CohortData>();
+    const unique = new Set<string>();
+    
+    equityCurve.forEach((point, idx) => {
+      const cohortDate = startOfMonth(parseISO(point.date));
+      const cohortKey = format(cohortDate, "yyyy-MM");
+      
+      // Initialize cohort if not exists
+      if (!cohortsMap.has(cohortKey)) {
+        cohortsMap.set(cohortKey, {
+          startDate: cohortKey,
+          data: [],
+        });
+        unique.add(cohortKey);
       }
-    }
+      
+      // Calculate days since cohort start
+      const start = parseISO(equityCurve[0].date);
+      const current = parseISO(point.date);
+      const day = Math.floor((current.getTime() - start.getTime()) / (1000 * 3600 * 24));
+      
+      // Get previous equity for velocity calculation
+      const prevEquity = idx > 0 ? equityCurve[idx - 1].equity : point.equity;
+      const velocity = point.equity - prevEquity;
+      
+      cohortsMap.get(cohortKey)?.data.push({
+        day,
+        equity: point.equity,
+        velocity,
+      });
+    });
 
-    loadData()
-  }, [])
-
-  return { data, loading }
+    return {
+      cohorts: Array.from(cohortsMap.values()),
+      uniqueCohorts: Array.from(unique).sort(),
+    };
+  }, [equityCurve]);
 } 
