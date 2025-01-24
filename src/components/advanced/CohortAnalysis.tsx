@@ -24,9 +24,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -164,6 +164,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
           <ChartContainer config={chartConfig}>
             <LineChart
               margin={{ top: 20, right: 30, bottom: 70, left: 80 }}
+              accessibilityLayer
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
@@ -192,7 +193,11 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                 }}
                 tick={{ fontSize: 12 }}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                cursor={false}
+                content={<ChartTooltipContent />}
+                wrapperStyle={{ zIndex: 100 }}
+              />
               {cohorts
                 .filter(cohort => visibleCohorts.includes(cohort.startDate))
                 .map((cohort, idx) => (
@@ -207,6 +212,12 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                     strokeWidth={2}
                     isAnimationActive={false}
                     connectNulls={true}
+                    activeDot={{
+                      r: 6,
+                      fill: COLORS[idx % COLORS.length],
+                      strokeWidth: 2,
+                      stroke: "#fff"
+                    }}
                   />
                 ))}
             </LineChart>
