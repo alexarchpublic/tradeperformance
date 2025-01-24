@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { format } from "date-fns";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 import { useCohortData } from "@/hooks/useCohortData";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,7 +48,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-3">Select Cohorts</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {uniqueCohorts.map((cohort, idx) => (
+          {uniqueCohorts.map((cohort) => (
             <label key={cohort} className="flex items-center space-x-2">
               <Checkbox
                 checked={selectedCohorts.includes(cohort)}
