@@ -66,6 +66,15 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      {/* Add Title and Description */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-2">Cohort Analysis</h2>
+        <p className="text-gray-600">
+          Compare performance across different time periods by grouping trades into monthly cohorts. 
+          Each cohort tracks cumulative performance from its start date.
+        </p>
+      </div>
+
       {/* Cohort Selection */}
       <div className="mb-6 space-y-4">
         {/* Year Selection and Reset */}
@@ -140,7 +149,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
         <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
-            margin={{ top: 20, right: 20, bottom: 80, left: 70 }}
+            margin={{ top: 20, right: 100, bottom: 40, left: 70 }}
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
@@ -171,12 +180,13 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
               isAnimationActive={false}
             />
             <Legend 
-              verticalAlign="bottom"
-              height={36}
+              align="right"
+              verticalAlign="middle"
+              layout="vertical"
               wrapperStyle={{
-                paddingTop: '20px',
-                bottom: 0,
-                fontSize: '12px'
+                right: -90,
+                fontSize: '12px',
+                lineHeight: '20px'
               }}
             />
             {cohorts
