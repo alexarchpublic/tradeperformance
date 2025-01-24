@@ -19,7 +19,6 @@ export function useCohortData(equityCurve: EquityCurvePoint[]) {
     // First, organize points by cohort
     equityCurve.forEach((point) => {
       const pointDate = parseISO(point.date);
-      const cohortDate = startOfMonth(pointDate);
       
       // Add all points to their respective cohorts
       // A point belongs to all cohorts that started before or during its month
