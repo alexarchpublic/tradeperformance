@@ -64,6 +64,22 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       minimumFractionDigits: 0,
     }).format(value);
 
+  // Custom tooltip component for better control
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || !payload.length) return null;
+    
+    return (
+      <div className="bg-white p-2 border rounded shadow-sm text-sm">
+        <p className="font-medium mb-1">Trade {label}</p>
+        {payload.map((entry: any) => (
+          <div key={entry.name} style={{ color: entry.color }}>
+            {entry.name}: {formatDollar(entry.value)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       {/* Add Title and Description */}
@@ -147,66 +163,77 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       {/* Equity Curves */}
       <div className="h-[500px]">
         <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart 
-            margin={{ top: 20, right: 100, bottom: 40, left: 70 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis
-              dataKey="tradeNumber"
-              label={{ 
-                value: "Trade Number", 
-                position: "bottom",
-                offset: 20
-              }}
-              tick={{ fontSize: 12 }}
-              type="number"
-              domain={[0, 'dataMax']}
-              allowDataOverflow={false}
-            />
-            <YAxis
-              tickFormatter={formatDollar}
-              label={{
-                value: "Account Value ($)",
-                angle: -90,
-                position: "insideLeft",
-                offset: -50,
-              }}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip
-              formatter={(value: number) => [formatDollar(value), 'Value']}
-              labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
-              isAnimationActive={false}
-            />
-            <Legend 
-              align="right"
-              verticalAlign="middle"
-              layout="vertical"
-              wrapperStyle={{
-                right: -90,
-                fontSize: '12px',
-                lineHeight: '20px'
-              }}
-            />
-            {cohorts
-              .filter(cohort => visibleCohorts.includes(cohort.startDate))
-              .map((cohort, idx) => (
-                <Line
-                  key={cohort.startDate}
-                  data={cohort.data}
-                  type="monotone"
-                  dataKey="equity"
-                  name={`Cohort ${cohort.startDate}`}
-                  stroke={COLORS[idx % COLORS.length]}
-                  dot={false}
-                  strokeWidth={2}
-                  isAnimationActive={false}
-                  activeDot={{ r: 4, strokeWidth: 1 }}
-                />
-              ))}
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full relative">
+          <ResponsiveContainer>
+            <LineChart 
+              margin={{ top: 20, right: 20, bottom: 40, left: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis
+                dataKey="tradeNumber"
+                label={{ 
+                  value: "Trade Number", 
+                  position: "bottom",
+                  offset: 20
+                }}
+                tick={{ fontSize: 12 }}
+                type="number"
+                domain={[0, 'dataMax']}
+                allowDataOverflow={false}
+              />
+              <YAxis
+                tickFormatter={formatDollar}
+                label={{
+                  value: "Account Value ($)",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: -50,
+                }}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                content={<CustomTooltip />}
+                isAnimationActive={false}
+                cursor={{ strokeDasharray: '3 3' }}
+              />
+              <Legend 
+                align="right"
+                verticalAlign="top"
+                layout="vertical"
+                wrapperStyle={{
+                  paddingLeft: '10px',
+                  paddingRight: '10px',
+                  right: 0,
+                  top: 0,
+                  maxHeight: '100%',
+                  overflowY: 'auto'
+                }}
+              />
+              {cohorts
+                .filter(cohort => visibleCohorts.includes(cohort.startDate))
+                .map((cohort, idx) => (
+                  <Line
+                    key={cohort.startDate}
+                    data={cohort.data}
+                    type="monotone"
+                    dataKey="equity"
+                    name={`Cohort ${cohort.startDate}`}
+                    stroke={COLORS[idx % COLORS.length]}
+                    dot={false}
+                    strokeWidth={2}
+                    isAnimationActive={false}
+                    activeDot={{ 
+                      r: 4, 
+                      strokeWidth: 1,
+                      strokeOpacity: 1,
+                      fill: COLORS[idx % COLORS.length],
+                    }}
+                    connectNulls={true}
+                  />
+                ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
