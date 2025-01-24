@@ -13,55 +13,51 @@ export interface CohortData {
 
 export function useCohortData(equityCurve: EquityCurvePoint[]) {
   return useMemo(() => {
-    const cohortsMap = new Map<string, CohortData>();
-    const unique = new Set<string>();
-    
-    // First, organize points by cohort
-    equityCurve.forEach((point) => {
-      const pointDate = parseISO(point.date);
+    // Sort equity curve chronologically
+    const sortedCurve = [...equityCurve].sort((a, b) => 
+      parseISO(a.date).getTime() - parseISO(b.date).getTime()
+    );
+
+    // Get unique cohort start dates (first of each month)
+    const cohortStarts = sortedCurve.reduce((acc, point) => {
+      const cohortStart = startOfMonth(parseISO(point.date));
+      return acc.add(cohortStart.toISOString());
+    }, new Set<string>());
+
+    const cohorts: CohortData[] = [];
+    const uniqueCohorts: string[] = [];
+
+    // Process each cohort
+    Array.from(cohortStarts).forEach(cohortStart => {
+      const startDate = parseISO(cohortStart);
+      const cohortKey = format(startDate, 'yyyy-MM');
       
-      // Add all points to their respective cohorts
-      // A point belongs to all cohorts that started before or during its month
-      equityCurve.forEach((cohortPoint) => {
-        const cohortPointDate = parseISO(cohortPoint.date);
-        const cohortStartDate = startOfMonth(cohortPointDate);
-        
-        if (cohortPointDate >= pointDate) {
-          const key = format(cohortStartDate, "yyyy-MM");
-          
-          if (!cohortsMap.has(key)) {
-            cohortsMap.set(key, {
-              startDate: key,
-              data: [],
-            });
-            unique.add(key);
-          }
-          
-          const cohortData = cohortsMap.get(key)!;
-          
-          // Only add point if it's after or in the cohort's start month
-          if (pointDate >= cohortStartDate) {
-            // Calculate trade number within this cohort
-            const tradeNumber = cohortData.data.length + 1;
-            
-            // Get previous equity for velocity calculation
-            const prevPoint = cohortData.data[cohortData.data.length - 1];
-            const prevEquity = prevPoint ? prevPoint.equity : point.equity;
-            const velocity = point.equity - prevEquity;
-            
-            cohortData.data.push({
-              tradeNumber,
-              equity: point.equity,
-              velocity,
-            });
-          }
-        }
+      // Filter trades that occurred AT OR AFTER this cohort start
+      const cohortPoints = sortedCurve.filter(point => 
+        parseISO(point.date) >= startDate
+      );
+
+      // Calculate trade numbers and velocity
+      const data = cohortPoints.map((point, index) => {
+        const prevEquity = index > 0 ? cohortPoints[index - 1].equity : point.equity;
+        return {
+          tradeNumber: index + 1,
+          equity: point.equity,
+          velocity: point.equity - prevEquity
+        };
       });
+
+      cohorts.push({
+        startDate: cohortKey,
+        data
+      });
+      
+      uniqueCohorts.push(cohortKey);
     });
 
     return {
-      cohorts: Array.from(cohortsMap.values()),
-      uniqueCohorts: Array.from(unique).sort(),
+      cohorts: cohorts.sort((a, b) => a.startDate.localeCompare(b.startDate)),
+      uniqueCohorts: uniqueCohorts.sort()
     };
   }, [equityCurve]);
 } 

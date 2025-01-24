@@ -157,7 +157,12 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
               tick={{ fontSize: 12 }}
             />
             <Tooltip
-              formatter={(value: number) => formatDollar(value)}
+              formatter={(value: number, name: string) => {
+                if (name.includes('Velocity')) {
+                  return [formatDollar(value), 'Daily P&L'];
+                }
+                return [formatDollar(value), name];
+              }}
               labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
             />
             <Legend />
@@ -201,7 +206,12 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
               tick={{ fontSize: 12 }}
             />
             <Tooltip
-              formatter={(value: number) => formatDollar(value)}
+              formatter={(value: number, name: string) => {
+                if (name.includes('Velocity')) {
+                  return [formatDollar(value), 'Daily P&L'];
+                }
+                return [formatDollar(value), name];
+              }}
               labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
             />
             <Legend />
