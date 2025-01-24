@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, parseISO, startOfMonth } from "date-fns";
+import { format, parseISO, startOfMonth, isSameMonth } from "date-fns";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
 export interface CohortData {
@@ -16,31 +16,48 @@ export function useCohortData(equityCurve: EquityCurvePoint[]) {
     const cohortsMap = new Map<string, CohortData>();
     const unique = new Set<string>();
     
-    equityCurve.forEach((point, idx) => {
-      const cohortDate = startOfMonth(parseISO(point.date));
+    // First, organize points by cohort
+    equityCurve.forEach((point) => {
+      const pointDate = parseISO(point.date);
+      const cohortDate = startOfMonth(pointDate);
       const cohortKey = format(cohortDate, "yyyy-MM");
       
-      // Initialize cohort if not exists
-      if (!cohortsMap.has(cohortKey)) {
-        cohortsMap.set(cohortKey, {
-          startDate: cohortKey,
-          data: [],
-        });
-        unique.add(cohortKey);
-      }
-      
-      // Calculate trade number for this cohort
-      const cohortData = cohortsMap.get(cohortKey)!;
-      const tradeNumber = cohortData.data.length + 1;
-      
-      // Get previous equity for velocity calculation
-      const prevEquity = idx > 0 ? equityCurve[idx - 1].equity : point.equity;
-      const velocity = point.equity - prevEquity;
-      
-      cohortData.data.push({
-        tradeNumber,
-        equity: point.equity,
-        velocity,
+      // Add all points to their respective cohorts
+      // A point belongs to all cohorts that started before or during its month
+      equityCurve.forEach((cohortPoint) => {
+        const cohortPointDate = parseISO(cohortPoint.date);
+        const cohortStartDate = startOfMonth(cohortPointDate);
+        
+        if (cohortPointDate >= pointDate) {
+          const key = format(cohortStartDate, "yyyy-MM");
+          
+          if (!cohortsMap.has(key)) {
+            cohortsMap.set(key, {
+              startDate: key,
+              data: [],
+            });
+            unique.add(key);
+          }
+          
+          const cohortData = cohortsMap.get(key)!;
+          
+          // Only add point if it's after or in the cohort's start month
+          if (pointDate >= cohortStartDate) {
+            // Calculate trade number within this cohort
+            const tradeNumber = cohortData.data.length + 1;
+            
+            // Get previous equity for velocity calculation
+            const prevPoint = cohortData.data[cohortData.data.length - 1];
+            const prevEquity = prevPoint ? prevPoint.equity : point.equity;
+            const velocity = point.equity - prevEquity;
+            
+            cohortData.data.push({
+              tradeNumber,
+              equity: point.equity,
+              velocity,
+            });
+          }
+        }
       });
     });
 

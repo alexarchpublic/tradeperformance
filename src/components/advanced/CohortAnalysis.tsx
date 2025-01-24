@@ -34,23 +34,28 @@ const COLORS = [
   "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#64748b"
 ];
 
+const DEFAULT_YEAR = "2019";
+
 export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
   const { cohorts, uniqueCohorts } = useCohortData(equityCurve);
   const [selectedCohorts, setSelectedCohorts] = useState<string[]>([]);
-  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>(DEFAULT_YEAR);
 
   // Get unique years from cohorts
   const years = [...new Set(uniqueCohorts.map(cohort => cohort.substring(0, 4)))].sort();
 
   // Filter cohorts by year
-  const filteredCohorts = yearFilter === "all" 
-    ? uniqueCohorts 
-    : uniqueCohorts.filter(cohort => cohort.startsWith(yearFilter));
+  const filteredCohorts = uniqueCohorts.filter(cohort => cohort.startsWith(yearFilter));
 
   // Default to selecting first 3 cohorts if none selected
   const visibleCohorts = selectedCohorts.length > 0 
     ? selectedCohorts 
     : filteredCohorts.slice(0, 3);
+
+  const handleReset = () => {
+    setSelectedCohorts([]);
+    setYearFilter(DEFAULT_YEAR);
+  };
 
   const formatDollar = (value: number) => 
     new Intl.NumberFormat('en-US', {
@@ -62,46 +67,69 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       {/* Cohort Selection */}
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-48">
-          <Select
-            value={yearFilter}
-            onValueChange={setYearFilter}
+      <div className="mb-6 space-y-4">
+        {/* Year Selection and Reset */}
+        <div className="flex items-center gap-4">
+          <div className="w-48">
+            <Select
+              value={yearFilter}
+              onValueChange={setYearFilter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Filter by Year</SelectLabel>
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleReset}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Filter by Year</SelectLabel>
-                <SelectItem value="all">All Years</SelectItem>
-                {years.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+            Reset Cohorts
+          </Button>
         </div>
 
-        <div className="flex-1">
-          <ScrollArea className="h-24 md:h-auto">
+        {/* Selected Cohorts */}
+        {selectedCohorts.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedCohorts.map((cohort) => (
+              <Button
+                key={cohort}
+                variant="default"
+                size="sm"
+                onClick={() => setSelectedCohorts(selectedCohorts.filter(c => c !== cohort))}
+                className="bg-primary/10 hover:bg-primary/20 text-primary"
+              >
+                {cohort} ✕
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Available Cohorts */}
+        <div>
+          <h4 className="text-sm font-medium mb-2">Available Cohorts</h4>
+          <ScrollArea className="h-24">
             <div className="flex flex-wrap gap-2">
-              {filteredCohorts.map((cohort) => (
-                <Button
-                  key={cohort}
-                  variant={selectedCohorts.includes(cohort) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    if (selectedCohorts.includes(cohort)) {
-                      setSelectedCohorts(selectedCohorts.filter(c => c !== cohort));
-                    } else {
-                      setSelectedCohorts([...selectedCohorts, cohort]);
-                    }
-                  }}
-                >
-                  {cohort}
-                </Button>
-              ))}
+              {filteredCohorts
+                .filter(cohort => !selectedCohorts.includes(cohort))
+                .map((cohort) => (
+                  <Button
+                    key={cohort}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCohorts([...selectedCohorts, cohort])}
+                  >
+                    {cohort}
+                  </Button>
+                ))}
             </div>
           </ScrollArea>
         </div>
