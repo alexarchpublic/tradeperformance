@@ -36,6 +36,19 @@ const COLORS = [
 
 const DEFAULT_YEAR = "2019";
 
+// Add tooltip type definitions
+interface TooltipPayload {
+  value: number;
+  name: string;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string | number;
+}
+
 export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
   const { cohorts, uniqueCohorts } = useCohortData(equityCurve);
   const [selectedCohorts, setSelectedCohorts] = useState<string[]>([]);
@@ -64,14 +77,14 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       minimumFractionDigits: 0,
     }).format(value);
 
-  // Custom tooltip component for better control
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  // Updated tooltip component with proper types
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (!active || !payload || !payload.length) return null;
     
     return (
       <div className="bg-white p-2 border rounded shadow-sm text-sm">
         <p className="font-medium mb-1">Trade {label}</p>
-        {payload.map((entry: any) => (
+        {payload.map((entry) => (
           <div key={entry.name} style={{ color: entry.color }}>
             {entry.name}: {formatDollar(entry.value)}
           </div>
