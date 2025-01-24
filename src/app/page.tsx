@@ -11,6 +11,7 @@ import { TradeChart } from "@/components/TradeChart";
 import { TradeList } from "@/components/TradeList";
 import Image from "next/image";
 import { AdvancedStats } from "@/components/advanced/AdvancedStats";
+import { CohortAnalysis } from "@/components/advanced/CohortAnalysis"
 
 export default function Home() {
   const [chartData, setChartData] = useState<ProcessedTradeData | null>(null);
@@ -153,6 +154,14 @@ export default function Home() {
       {/* Advanced Stats */}
       {chartData && (
         <AdvancedStats chartData={chartData} />
+      )}
+
+      {/* Add cohort analysis section */}
+      {chartData && (
+        <section className="cohort-analysis-section mt-8 p-6 border rounded-lg bg-card">
+          <h2 className="text-2xl font-semibold mb-6">Cohort Analysis</h2>
+          <CohortAnalysis equityCurve={chartData.equityCurve} />
+        </section>
       )}
 
       {/* Footer */}
