@@ -50,19 +50,6 @@ const COLORS = [
 
 const DEFAULT_YEAR = "2019";
 
-// Add tooltip type definitions
-interface TooltipPayload {
-  value: number;
-  name: string;
-  color: string;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayload[];
-  label?: string | number;
-}
-
 export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
   const { cohorts, uniqueCohorts } = useCohortData(equityCurve);
   const [selectedCohorts, setSelectedCohorts] = useState<string[]>([]);
