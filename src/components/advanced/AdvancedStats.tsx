@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from 'react'
 import { CohortAnalysis } from "@/components/advanced/CohortAnalysis"
-import { Button } from '@/components/ui/button'
 import { type ProcessedTradeData } from "@/lib/utils/trade-data"
 
 interface AdvancedStatsProps {
@@ -10,8 +8,6 @@ interface AdvancedStatsProps {
 }
 
 export function AdvancedStats({ chartData }: AdvancedStatsProps) {
-  const [showCohortAnalysis, setShowCohortAnalysis] = useState(false)
-
   if (!chartData?.equityCurve) {
     return null;
   }
@@ -71,4 +67,4 @@ export function AdvancedStats({ chartData }: AdvancedStatsProps) {
       </div>
     </div>
   )
-} 
+}
