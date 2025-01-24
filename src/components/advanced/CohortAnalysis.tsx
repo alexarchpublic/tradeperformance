@@ -140,7 +140,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
         <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
-            margin={{ top: 20, right: 20, bottom: 60, left: 70 }}
+            margin={{ top: 20, right: 20, bottom: 80, left: 70 }}
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
@@ -148,11 +148,12 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
               label={{ 
                 value: "Trade Number", 
                 position: "bottom",
-                offset: 40
+                offset: 20
               }}
               tick={{ fontSize: 12 }}
               type="number"
               domain={[0, 'dataMax']}
+              allowDataOverflow={false}
             />
             <YAxis
               tickFormatter={formatDollar}
@@ -167,11 +168,15 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
             <Tooltip
               formatter={(value: number) => [formatDollar(value), 'Value']}
               labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
+              isAnimationActive={false}
             />
             <Legend 
-              wrapperStyle={{ 
+              verticalAlign="bottom"
+              height={36}
+              wrapperStyle={{
                 paddingTop: '20px',
-                paddingBottom: '20px'
+                bottom: 0,
+                fontSize: '12px'
               }}
             />
             {cohorts
@@ -186,6 +191,8 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                   stroke={COLORS[idx % COLORS.length]}
                   dot={false}
                   strokeWidth={2}
+                  isAnimationActive={false}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
                 />
               ))}
           </LineChart>
