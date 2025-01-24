@@ -13,6 +13,11 @@ export interface CohortData {
 
 export function useCohortData(equityCurve: EquityCurvePoint[]) {
   return useMemo(() => {
+    if (equityCurve.length === 0) return { cohorts: [], uniqueCohorts: [] };
+    
+    // Get initial capital from first trade
+    const initialCapital = equityCurve[0].equity - equityCurve[0].pnl;
+    
     // Sort equity curve chronologically
     const sortedCurve = [...equityCurve].sort((a, b) => 
       parseISO(a.date).getTime() - parseISO(b.date).getTime()
@@ -37,13 +42,15 @@ export function useCohortData(equityCurve: EquityCurvePoint[]) {
         parseISO(point.date) >= startDate
       );
 
-      // Calculate trade numbers and velocity
+      // Calculate cumulative P&L relative to cohort start
+      let cumulativePnl = 0;
       const data = cohortPoints.map((point, index) => {
-        const prevEquity = index > 0 ? cohortPoints[index - 1].equity : point.equity;
+        cumulativePnl += point.pnl;
+        
         return {
           tradeNumber: index + 1,
-          equity: point.equity,
-          velocity: point.equity - prevEquity
+          equity: initialCapital + cumulativePnl,
+          velocity: point.pnl // Velocity should be the raw P&L value
         };
       });
 
