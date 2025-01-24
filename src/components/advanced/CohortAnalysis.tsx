@@ -81,10 +81,15 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (!active || !payload || !payload.length) return null;
     
+    // Filter out any payload items that have undefined or null values
+    const validPayload = payload.filter(entry => entry.value !== undefined && entry.value !== null);
+    
+    if (validPayload.length === 0) return null;
+    
     return (
       <div className="bg-white p-2 border rounded shadow-sm text-sm">
         <p className="font-medium mb-1">Trade {label}</p>
-        {payload.map((entry) => (
+        {validPayload.map((entry) => (
           <div key={entry.name} style={{ color: entry.color }}>
             {entry.name}: {formatDollar(entry.value)}
           </div>
@@ -174,12 +179,12 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       </div>
 
       {/* Equity Curves */}
-      <div className="h-[500px]">
+      <div className="h-[600px]">
         <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
         <div className="w-full h-full relative">
           <ResponsiveContainer>
             <LineChart 
-              margin={{ top: 20, right: 20, bottom: 40, left: 70 }}
+              margin={{ top: 20, right: 20, bottom: 50, left: 70 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
@@ -187,7 +192,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                 label={{ 
                   value: "Trade Number", 
                   position: "bottom",
-                  offset: 20
+                  offset: 35
                 }}
                 tick={{ fontSize: 12 }}
                 type="number"
