@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, parseISO, startOfMonth, isSameMonth } from "date-fns";
+import { format, parseISO, startOfMonth } from "date-fns";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 
 export interface CohortData {
@@ -20,7 +20,6 @@ export function useCohortData(equityCurve: EquityCurvePoint[]) {
     equityCurve.forEach((point) => {
       const pointDate = parseISO(point.date);
       const cohortDate = startOfMonth(pointDate);
-      const cohortKey = format(cohortDate, "yyyy-MM");
       
       // Add all points to their respective cohorts
       // A point belongs to all cohorts that started before or during its month
