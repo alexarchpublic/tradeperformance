@@ -24,14 +24,31 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface CohortAnalysisProps {
   equityCurve: EquityCurvePoint[];
 }
 
+// Colors for cohorts using shadcn chart colors
 const COLORS = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#64748b"
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
 ];
 
 const DEFAULT_YEAR = "2019";
@@ -70,129 +87,107 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
     setYearFilter(DEFAULT_YEAR);
   };
 
-  const formatDollar = (value: number) => 
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(value);
-
-  // Updated tooltip component with proper types
-  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-    if (!active || !payload || !payload.length) return null;
-    
-    // Filter out any payload items that have undefined or null values
-    const validPayload = payload.filter(entry => entry.value !== undefined && entry.value !== null);
-    
-    if (validPayload.length === 0) return null;
-    
-    return (
-      <div className="bg-white p-2 border rounded shadow-sm text-sm">
-        <p className="font-medium mb-1">Trade {label}</p>
-        {validPayload.map((entry) => (
-          <div key={entry.name} style={{ color: entry.color }}>
-            {entry.name}: {formatDollar(entry.value)}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  // Create chart config for visible cohorts
+  const chartConfig = visibleCohorts.reduce((acc, cohort, idx) => {
+    acc[`cohort-${cohort}`] = {
+      label: `Cohort ${cohort}`,
+      color: COLORS[idx % COLORS.length],
+    };
+    return acc;
+  }, {} as ChartConfig);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      {/* Add Title and Description */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-2">Cohort Analysis</h2>
-        <p className="text-gray-600">
+    <Card>
+      <CardHeader>
+        <CardTitle>Cohort Analysis</CardTitle>
+        <CardDescription>
           Compare performance across different time periods by grouping trades into monthly cohorts. 
           Each cohort tracks cumulative performance from its start date.
-        </p>
-      </div>
-
-      {/* Cohort Selection */}
-      <div className="mb-6 space-y-4">
-        {/* Year Selection and Reset */}
-        <div className="flex items-center gap-4">
-          <div className="w-48">
-            <Select
-              value={yearFilter}
-              onValueChange={setYearFilter}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Filter by Year</SelectLabel>
-                  {years.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={handleReset}
-          >
-            Reset Cohorts
-          </Button>
-        </div>
-
-        {/* Selected Cohorts */}
-        {selectedCohorts.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedCohorts.map((cohort) => (
-              <Button
-                key={cohort}
-                variant="default"
-                size="sm"
-                onClick={() => setSelectedCohorts(selectedCohorts.filter(c => c !== cohort))}
-                className="bg-primary/10 hover:bg-primary/20 text-primary"
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Cohort Selection */}
+        <div className="mb-6 space-y-4">
+          {/* Year Selection and Reset */}
+          <div className="flex items-center gap-4">
+            <div className="w-48">
+              <Select
+                value={yearFilter}
+                onValueChange={setYearFilter}
               >
-                {cohort} ✕
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {/* Available Cohorts */}
-        <div>
-          <h4 className="text-sm font-medium mb-2">Available Cohorts</h4>
-          <ScrollArea className="h-24">
-            <div className="flex flex-wrap gap-2">
-              {filteredCohorts
-                .filter(cohort => !selectedCohorts.includes(cohort))
-                .map((cohort) => (
-                  <Button
-                    key={cohort}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedCohorts([...selectedCohorts, cohort])}
-                  >
-                    {cohort}
-                  </Button>
-                ))}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Filter by Year</SelectLabel>
+                    {years.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
-          </ScrollArea>
-        </div>
-      </div>
+            <Button 
+              variant="outline" 
+              onClick={handleReset}
+            >
+              Reset Cohorts
+            </Button>
+          </div>
 
-      {/* Equity Curves */}
-      <div className="h-[600px]">
-        <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
-        <div className="w-full h-full relative">
-          <ResponsiveContainer>
-            <LineChart 
-              margin={{ top: 20, right: 20, bottom: 50, left: 70 }}
+          {/* Selected Cohorts */}
+          {selectedCohorts.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedCohorts.map((cohort) => (
+                <Button
+                  key={cohort}
+                  variant="default"
+                  size="sm"
+                  onClick={() => setSelectedCohorts(selectedCohorts.filter(c => c !== cohort))}
+                  className="bg-primary/10 hover:bg-primary/20 text-primary"
+                >
+                  {cohort} ✕
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {/* Available Cohorts */}
+          <div>
+            <h4 className="text-sm font-medium mb-2">Available Cohorts</h4>
+            <ScrollArea className="h-24">
+              <div className="flex flex-wrap gap-2">
+                {filteredCohorts
+                  .filter(cohort => !selectedCohorts.includes(cohort))
+                  .map((cohort) => (
+                    <Button
+                      key={cohort}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedCohorts([...selectedCohorts, cohort])}
+                    >
+                      {cohort}
+                    </Button>
+                  ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+
+        {/* Equity Curves */}
+        <div className="h-[600px] w-full mb-12">
+          <ChartContainer config={chartConfig}>
+            <LineChart
+              margin={{ top: 20, right: 30, bottom: 70, left: 80 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
                 dataKey="tradeNumber"
-                label={{ 
-                  value: "Trade Number", 
+                label={{
+                  value: "Trade Number",
                   position: "bottom",
-                  offset: 35
+                  offset: 45,
                 }}
                 tick={{ fontSize: 12 }}
                 type="number"
@@ -200,7 +195,11 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                 allowDataOverflow={false}
               />
               <YAxis
-                tickFormatter={formatDollar}
+                tickFormatter={(value) => new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 0,
+                }).format(value)}
                 label={{
                   value: "Account Value ($)",
                   angle: -90,
@@ -209,24 +208,7 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                 }}
                 tick={{ fontSize: 12 }}
               />
-              <Tooltip 
-                content={<CustomTooltip />}
-                isAnimationActive={false}
-                cursor={{ strokeDasharray: '3 3' }}
-              />
-              <Legend 
-                align="right"
-                verticalAlign="top"
-                layout="vertical"
-                wrapperStyle={{
-                  paddingLeft: '10px',
-                  paddingRight: '10px',
-                  right: 0,
-                  top: 0,
-                  maxHeight: '100%',
-                  overflowY: 'auto'
-                }}
-              />
+              <ChartTooltip content={<ChartTooltipContent />} />
               {cohorts
                 .filter(cohort => visibleCohorts.includes(cohort.startDate))
                 .map((cohort, idx) => (
@@ -240,19 +222,13 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                     dot={false}
                     strokeWidth={2}
                     isAnimationActive={false}
-                    activeDot={{ 
-                      r: 4, 
-                      strokeWidth: 1,
-                      strokeOpacity: 1,
-                      fill: COLORS[idx % COLORS.length],
-                    }}
                     connectNulls={true}
                   />
                 ))}
             </LineChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 } 
