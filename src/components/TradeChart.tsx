@@ -6,8 +6,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
@@ -71,19 +69,6 @@ function getChartMargins(isDrawdownSelected: boolean, isSubgraph: boolean) {
   };
 }
 
-/**
- * Tooltip for the main chart that shows Equity, Drawdown, and/or PnL.
- * We make sure PnL data is always included here, even if drawn in a subgraph.
- */
-interface CustomMainTooltipProps {
-  active?: boolean;
-  label?: string | number;
-  payload?: Array<{
-    name?: string;
-    value?: number;
-  }>;
-}
-
 export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   const mainChartRef = useRef<HTMLDivElement>(null);
   const [rangeValues, setRangeValues] = useState<[number, number]>([
@@ -91,7 +76,7 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
     data.equityCurve.length - 1,
   ]);
 
-  // Reset range values when data changes (e.g., start date changes)
+  // Reset range values when data changes
   useEffect(() => {
     setRangeValues([0, data.equityCurve.length - 1]);
   }, [data.equityCurve.length]);
@@ -199,57 +184,6 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
   }
 
   const { dollarDomain, pnlDomain, drawdownDomain } = calculateDomains();
-
-  // Create custom tooltip components for main chart and subgraph
-  function CustomMainTooltip({
-    active,
-    label,
-    payload,
-  }: CustomMainTooltipProps) {
-    if (!active || !payload?.length) return null;
-
-    const equityItem = payload.find((p) => p.name === "Account Value");
-    const drawdownItem = payload.find((p) => p.name === "Peak to Peak Drawdown");
-    const pnlItem = payload.find((p) => p.name === "P&L");
-
-    const formatDollar = (val: number) =>
-      new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(val);
-
-    const formatPercent = (val: number) => `${val.toFixed(2)}%`;
-
-    return (
-      <div className="bg-white p-2 rounded shadow text-xs text-gray-700">
-        {label && (
-          <div className="font-semibold border-b pb-1">
-            {format(new Date(label), "MMM d, yyyy")}
-          </div>
-        )}
-        {equityItem && (
-          <div className="flex items-center justify-between">
-            <span className="text-green-600 mr-4">Equity:</span>
-            <span>{formatDollar(equityItem.value ?? 0)}</span>
-          </div>
-        )}
-        {drawdownItem && (
-          <div className="flex items-center justify-between">
-            <span className="text-red-600 mr-4">Drawdown:</span>
-            <span>{formatPercent(drawdownItem.value ?? 0)}</span>
-          </div>
-        )}
-        {pnlItem && isPnLSelected && (
-          <div className="flex items-center justify-between">
-            <span className="text-blue-600 mr-4">P&L:</span>
-            <span>{formatDollar(pnlItem.value ?? 0)}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <Card>
@@ -428,9 +362,8 @@ export function TradeChart({ data, selectedMetrics }: TradeChartProps) {
                   <ReferenceLine
                     y={0}
                     yAxisId="pnl"
-                    stroke="#666"
+                    stroke="var(--border)"
                     strokeDasharray="3 3"
-                    opacity={0.5}
                   />
                   {isDrawdownSelected && (
                     <YAxis

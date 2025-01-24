@@ -7,9 +7,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
 import { useCohortData } from "@/hooks/useCohortData";
