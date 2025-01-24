@@ -136,15 +136,23 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
       </div>
 
       {/* Equity Curves */}
-      <div className="h-[400px] mb-8">
+      <div className="h-[500px]">
         <h3 className="text-lg font-semibold mb-3">Cohort Equity Curves</h3>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart margin={{ top: 20, right: 20, bottom: 20, left: 70 }}>
+          <LineChart 
+            margin={{ top: 20, right: 20, bottom: 60, left: 70 }}
+          >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
               dataKey="tradeNumber"
-              label={{ value: "Trade Number", position: "bottom" }}
+              label={{ 
+                value: "Trade Number", 
+                position: "bottom",
+                offset: 40
+              }}
               tick={{ fontSize: 12 }}
+              type="number"
+              domain={[0, 'dataMax']}
             />
             <YAxis
               tickFormatter={formatDollar}
@@ -157,15 +165,15 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
               tick={{ fontSize: 12 }}
             />
             <Tooltip
-              formatter={(value: number, name: string) => {
-                if (name.includes('Velocity')) {
-                  return [formatDollar(value), 'Daily P&L'];
-                }
-                return [formatDollar(value), name];
-              }}
+              formatter={(value: number) => [formatDollar(value), 'Value']}
               labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
             />
-            <Legend />
+            <Legend 
+              wrapperStyle={{ 
+                paddingTop: '20px',
+                paddingBottom: '20px'
+              }}
+            />
             {cohorts
               .filter(cohort => visibleCohorts.includes(cohort.startDate))
               .map((cohort, idx) => (
@@ -174,55 +182,6 @@ export function CohortAnalysis({ equityCurve }: CohortAnalysisProps) {
                   data={cohort.data}
                   type="monotone"
                   dataKey="equity"
-                  name={`Cohort ${cohort.startDate}`}
-                  stroke={COLORS[idx % COLORS.length]}
-                  dot={false}
-                  strokeWidth={2}
-                />
-              ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Velocity Chart */}
-      <div className="h-[400px]">
-        <h3 className="text-lg font-semibold mb-3">Equity Velocity</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart margin={{ top: 20, right: 20, bottom: 20, left: 70 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis
-              dataKey="tradeNumber"
-              label={{ value: "Trade Number", position: "bottom" }}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              tickFormatter={formatDollar}
-              label={{
-                value: "Daily P&L ($)",
-                angle: -90,
-                position: "insideLeft",
-                offset: -50,
-              }}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip
-              formatter={(value: number, name: string) => {
-                if (name.includes('Velocity')) {
-                  return [formatDollar(value), 'Daily P&L'];
-                }
-                return [formatDollar(value), name];
-              }}
-              labelFormatter={(tradeNumber) => `Trade ${tradeNumber}`}
-            />
-            <Legend />
-            {cohorts
-              .filter(cohort => visibleCohorts.includes(cohort.startDate))
-              .map((cohort, idx) => (
-                <Line
-                  key={cohort.startDate}
-                  data={cohort.data}
-                  type="monotone"
-                  dataKey="velocity"
                   name={`Cohort ${cohort.startDate}`}
                   stroke={COLORS[idx % COLORS.length]}
                   dot={false}

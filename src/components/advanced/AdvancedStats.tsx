@@ -66,21 +66,7 @@ export function AdvancedStats({ chartData }: AdvancedStatsProps) {
 
         {/* Cohort Analysis Section */}
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Cohort Analysis</h2>
-            <Button 
-              onClick={() => setShowCohortAnalysis(!showCohortAnalysis)}
-              variant="outline"
-            >
-              {showCohortAnalysis ? 'Hide' : 'Show'} Cohort Analysis
-            </Button>
-          </div>
-
-          {showCohortAnalysis && (
-            <section className="cohort-analysis-section mt-8">
-              <CohortAnalysis equityCurve={chartData.equityCurve} />
-            </section>
-          )}
+          <CohortAnalysis equityCurve={chartData.equityCurve} />
         </div>
       </div>
     </div>
