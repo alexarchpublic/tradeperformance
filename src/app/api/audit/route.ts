@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createWorker, type Worker, type WorkerOptions } from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
 import { prisma } from '@/lib/prisma';
 import { parseAuditedTradeData } from '@/lib/utils/audit-parser';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -22,8 +22,10 @@ export async function POST(request: Request) {
 
     // Initialize Tesseract worker
     const worker = await createWorker();
-    await (worker as any).loadLanguage('eng');
-    await (worker as any).initialize('eng');
+    // @ts-expect-error - Tesseract.js types don't match the actual API
+    await worker.loadLanguage('eng');
+    // @ts-expect-error - Tesseract.js types don't match the actual API
+    await worker.initialize('eng');
 
     // Perform OCR
     const { data: { text } } = await worker.recognize(buffer);
