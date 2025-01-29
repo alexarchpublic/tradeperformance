@@ -38,12 +38,12 @@ interface TradeChartProps {
   showAuditedTrades?: boolean;
 }
 
-// Colors for line metrics using shadcn chart colors
+// Colors for line metrics using standard colors
 const METRIC_COLORS = {
-  equity: "hsl(var(--chart-1))",
-  pnl: "hsl(var(--chart-2))",
-  drawdown: "hsl(var(--chart-3))",
-  audited: "hsl(var(--chart-4))",
+  equity: "#2E7D32",  // Dark green
+  pnl: "#1976D2",     // Dark blue
+  drawdown: "#D32F2F", // Dark red
+  audited: "#9C27B0"   // Purple
 };
 
 const chartConfig = {
@@ -63,7 +63,7 @@ const chartConfig = {
     label: "Audited Performance",
     color: METRIC_COLORS.audited,
   },
-} satisfies ChartConfig;
+};
 
 /**
  * If drawdown is selected => second Y-axis => bigger right margin so both
@@ -275,20 +275,21 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
             ref={mainChartRef}
             className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}
           >
-            <ChartContainer config={chartConfig}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={visibleData}
                 margin={getChartMargins(isDrawdownSelected, false)}
                 syncId="trading-charts"
               >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(date) => {
                     const formatted = format(new Date(date), window?.innerWidth < 768 ? "MMM d" : "MMM d, yyyy");
                     return formatted;
                   }}
-                  tick={{ fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  stroke="#333333"
                   padding={{ left: 20, right: 20 }}
                   hide={showPnLSubgraph}
                 />
@@ -296,7 +297,8 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                   yAxisId="dollar"
                   orientation="left"
                   domain={dollarDomain}
-                  tick={{ fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  stroke="#333333"
                   tickFormatter={(value) => {
                     const formatted = new Intl.NumberFormat('en-US', {
                       style: 'currency',
@@ -311,7 +313,7 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                     angle: -90,
                     position: "insideLeft",
                     offset: window?.innerWidth < 768 ? -35 : -50,
-                    style: { textAnchor: "middle", fontSize: window?.innerWidth < 768 ? 10 : 12 },
+                    style: { fill: "#333333", textAnchor: "middle", fontSize: window?.innerWidth < 768 ? 10 : 12 },
                   }}
                 />
                 {showPnLSubgraph && (
@@ -395,7 +397,7 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                   />
                 )}
 
-                {showAuditedTrades && data.auditedTrades && (
+                {showAuditedTrades && data.auditedTrades && data.auditedTrades.length > 0 && (
                   <Line
                     type="stepAfter"
                     data={data.auditedTrades}
@@ -410,7 +412,7 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                   />
                 )}
               </LineChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </div>
 
           {/* PnL Subgraph */}

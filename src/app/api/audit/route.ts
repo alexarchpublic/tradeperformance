@@ -3,60 +3,63 @@ import { createWorker } from 'tesseract.js';
 import { prisma } from '@/lib/prisma';
 import { parseAuditedTradeData } from '@/lib/utils/audit-parser';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { readdir, readFile } from 'fs/promises';
+import path from 'path';
+import type { AuditedTrade } from '.prisma/client';
 
-export async function POST(request: Request) {
+export async function GET() {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const algorithm = formData.get('algorithm') as string;
+    // Read all files in the audited-data directory
+    const auditedTradesDir = path.join(process.cwd(), 'public', 'audited-data');
+    const files = await readdir(auditedTradesDir);
+    const pngFiles = files.filter(file => file.endsWith('.png'));
 
-    if (!file || !algorithm) {
-      return NextResponse.json(
-        { error: 'File and algorithm are required' },
-        { status: 400 }
+    let allNewTrades: AuditedTrade[] = [];
+
+    for (const file of pngFiles) {
+      const filePath = path.join(auditedTradesDir, file);
+      const buffer = await readFile(filePath);
+      const algorithm = path.basename(file, '.png'); // Use filename as algorithm name
+
+      // Initialize Tesseract worker
+      const worker = await createWorker();
+      // @ts-expect-error - Tesseract.js types don't match the actual API
+      await worker.loadLanguage('eng');
+      // @ts-expect-error - Tesseract.js types don't match the actual API
+      await worker.initialize('eng');
+
+      // Perform OCR
+      const { data: { text } } = await worker.recognize(buffer);
+      await worker.terminate();
+
+      // Parse the OCR text into structured data
+      const trades = parseAuditedTradeData(text, algorithm);
+
+      // Save new trades to database
+      const savedTrades = await Promise.all(
+        trades.map(async (trade) => {
+          try {
+            return await prisma.auditedTrade.create({
+              data: trade,
+            });
+          } catch (error) {
+            // If trade already exists (unique constraint violation), skip it
+            if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+              return null;
+            }
+            throw error;
+          }
+        })
       );
+
+      // Filter out null values (skipped duplicates)
+      const newTrades = savedTrades.filter(Boolean);
+      allNewTrades = [...allNewTrades, ...newTrades];
     }
 
-    // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    // Initialize Tesseract worker
-    const worker = await createWorker();
-    // @ts-expect-error - Tesseract.js types don't match the actual API
-    await worker.loadLanguage('eng');
-    // @ts-expect-error - Tesseract.js types don't match the actual API
-    await worker.initialize('eng');
-
-    // Perform OCR
-    const { data: { text } } = await worker.recognize(buffer);
-    await worker.terminate();
-
-    // Parse the OCR text into structured data
-    const trades = parseAuditedTradeData(text, algorithm);
-
-    // Save new trades to database
-    const savedTrades = await Promise.all(
-      trades.map(async (trade) => {
-        try {
-          return await prisma.auditedTrade.create({
-            data: trade,
-          });
-        } catch (error) {
-          // If trade already exists (unique constraint violation), skip it
-          if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
-            return null;
-          }
-          throw error;
-        }
-      })
-    );
-
-    // Filter out null values (skipped duplicates)
-    const newTrades = savedTrades.filter(Boolean);
-
     return NextResponse.json({
-      message: `Successfully processed ${newTrades.length} new trades`,
-      newTrades,
+      message: `Successfully processed ${allNewTrades.length} new trades`,
+      newTrades: allNewTrades,
     });
 
   } catch (error) {
