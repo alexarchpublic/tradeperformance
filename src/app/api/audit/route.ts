@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createWorker } from 'tesseract.js';
+import { createWorker, type Worker, type WorkerOptions } from 'tesseract.js';
 import { prisma } from '@/lib/prisma';
 import { parseAuditedTradeData } from '@/lib/utils/audit-parser';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 export async function POST(request: Request) {
   try {
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
 
     // Initialize Tesseract worker
     const worker = await createWorker();
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
+    await (worker as any).loadLanguage('eng');
+    await (worker as any).initialize('eng');
 
     // Perform OCR
     const { data: { text } } = await worker.recognize(buffer);
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
           });
         } catch (error) {
           // If trade already exists (unique constraint violation), skip it
-          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
             return null;
           }
           throw error;
