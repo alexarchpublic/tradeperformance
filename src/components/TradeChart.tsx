@@ -14,8 +14,19 @@ import { format } from "date-fns";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart-container";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface TradeChartProps {
   data: {
