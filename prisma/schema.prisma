@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model AuditedTrade {
+  id          String   @id @default(cuid())
+  algorithm   String   // e.g., "Gateway @MES"
+  symbol      String   // e.g., "@MES"
+  type        String   // EntryLong, EntryShort, ExitLong, ExitShort
+  signal      String   // LE, SE, LX.Targ.Pcnt, etc.
+  date        DateTime
+  time        String
+  price       Float
+  contracts   Int
+  profit      Float?
+  profitPct   Float?
+  cumProfit   Float?
+  cumProfitPct Float?
+  backtestingProfit Float?
+  slippage    Float?
+  slippagePerContract Float?
+  totalContracts Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([algorithm, date, time, type, signal])
+} 

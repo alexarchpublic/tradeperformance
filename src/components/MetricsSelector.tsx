@@ -4,43 +4,85 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 interface MetricsSelectorProps {
-  onMetricsChange: (metrics: string[]) => void;
   selectedMetrics: string[];
+  onMetricsChange: (metrics: string[]) => void;
+  showAuditedTrades?: boolean;
+  onAuditedTradesChange?: (show: boolean) => void;
 }
 
 export function MetricsSelector({
-  onMetricsChange,
   selectedMetrics,
+  onMetricsChange,
+  showAuditedTrades = false,
+  onAuditedTradesChange,
 }: MetricsSelectorProps) {
-  const metrics = [
-    { id: "equity", label: "Equity Curve" },
-    { id: "pnl", label: "PnL" },
-    { id: "drawdown", label: "Drawdown" },
-  ];
-
-  const handleMetricChange = (metricId: string, checked: boolean) => {
-    if (checked) {
-      onMetricsChange([...selectedMetrics, metricId]);
+  const handleMetricToggle = (metric: string) => {
+    if (selectedMetrics.includes(metric)) {
+      onMetricsChange(selectedMetrics.filter((m) => m !== metric));
     } else {
-      onMetricsChange(selectedMetrics.filter(id => id !== metricId));
+      onMetricsChange([...selectedMetrics, metric]);
     }
   };
 
   return (
-    <div className="space-y-2">
-      <Label>Metrics</Label>
-      <div className="space-y-2">
-        {metrics.map((metric) => (
-          <div key={metric.id} className="flex items-center space-x-2">
-            <Checkbox
-              id={metric.id}
-              checked={selectedMetrics.includes(metric.id)}
-              onCheckedChange={(checked) => handleMetricChange(metric.id, checked as boolean)}
-            />
-            <Label htmlFor={metric.id}>{metric.label}</Label>
-          </div>
-        ))}
+    <div className="flex flex-wrap gap-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="equity"
+          checked={selectedMetrics.includes("equity")}
+          onCheckedChange={() => handleMetricToggle("equity")}
+        />
+        <label
+          htmlFor="equity"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Account Value
+        </label>
       </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="pnl"
+          checked={selectedMetrics.includes("pnl")}
+          onCheckedChange={() => handleMetricToggle("pnl")}
+        />
+        <label
+          htmlFor="pnl"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          P&L
+        </label>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="drawdown"
+          checked={selectedMetrics.includes("drawdown")}
+          onCheckedChange={() => handleMetricToggle("drawdown")}
+        />
+        <label
+          htmlFor="drawdown"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Drawdown
+        </label>
+      </div>
+
+      {onAuditedTradesChange && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="audited"
+            checked={showAuditedTrades}
+            onCheckedChange={(checked) => onAuditedTradesChange(checked as boolean)}
+          />
+          <label
+            htmlFor="audited"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Show Audited Trades
+          </label>
+        </div>
+      )}
     </div>
   );
 } 

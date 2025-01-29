@@ -10,6 +10,7 @@ import { MetricsSelector } from "@/components/MetricsSelector";
 import { TradeChart } from "@/components/TradeChart";
 import { TradeList } from "@/components/TradeList";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const [chartData, setChartData] = useState<ProcessedTradeData | null>(null);
@@ -17,6 +18,8 @@ export default function Home() {
   const [algorithms, setAlgorithms] = useState<Algorithm[]>([{ dataset: 'nq_trades.csv', units: 1 }]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["equity"]);
   const [hoveredTradeIndex, setHoveredTradeIndex] = useState<number | null>(null);
+  const [showAuditedTrades, setShowAuditedTrades] = useState(false);
+  const [auditFile, setAuditFile] = useState<File | null>(null);
 
   const handleAlgorithmsChange = (newAlgorithms: Algorithm[]) => {
     setAlgorithms(newAlgorithms);
@@ -40,6 +43,41 @@ export default function Home() {
 
   const handleResetDate = () => {
     setStartDate(undefined);
+  };
+
+  const handleAuditFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setAuditFile(file);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('algorithm', algorithms[0].dataset.replace('.csv', ''));
+
+    try {
+      const response = await fetch('/api/audit', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload audit file');
+      }
+
+      const result = await response.json();
+      console.log('Audit upload result:', result);
+
+      // Refresh trade data to include new audited trades
+      const data = await loadTradeData(
+        algorithms,
+        startDate ? startDate.toISOString() : ''
+      );
+      setChartData(data);
+    } catch (error) {
+      console.error('Error uploading audit file:', error);
+      // TODO: Show error message to user
+    }
   };
 
   return (
@@ -91,6 +129,21 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Audit File Upload */}
+      <div className="flex items-center gap-4 px-4">
+        <div className="flex-grow">
+          <label className="block text-sm font-medium text-gray-500 mb-2">
+            Upload Audit Report
+          </label>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleAuditFileUpload}
+            className="w-full"
+          />
+        </div>
+      </div>
+
       {/* Stats Boxes */}
       {chartData && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 px-4">
@@ -133,12 +186,18 @@ export default function Home() {
       <div className="bg-white p-3 md:p-6 rounded-lg shadow mb-8 mx-2 md:mx-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h2 className="text-xl md:text-2xl font-bold">Performance Chart</h2>
-          <MetricsSelector selectedMetrics={selectedMetrics} onMetricsChange={setSelectedMetrics} />
+          <MetricsSelector
+            selectedMetrics={selectedMetrics}
+            onMetricsChange={setSelectedMetrics}
+            showAuditedTrades={showAuditedTrades}
+            onAuditedTradesChange={setShowAuditedTrades}
+          />
         </div>
         {chartData && chartData.equityCurve && (
           <TradeChart
-            data={{ equityCurve: chartData.equityCurve }}
+            data={chartData}
             selectedMetrics={selectedMetrics}
+            showAuditedTrades={showAuditedTrades}
           />
         )}
       </div>
