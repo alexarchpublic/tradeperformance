@@ -21,10 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-} from "@/components/ui/chart";
 
 interface TradeChartProps {
   data: {
@@ -44,25 +40,6 @@ const METRIC_COLORS = {
   pnl: "#1976D2",     // Dark blue
   drawdown: "#D32F2F", // Dark red
   audited: "#9C27B0"   // Purple
-};
-
-const chartConfig = {
-  equity: {
-    label: "Account Value",
-    color: METRIC_COLORS.equity,
-  },
-  pnl: {
-    label: "P&L",
-    color: METRIC_COLORS.pnl,
-  },
-  drawdown: {
-    label: "Drawdown",
-    color: METRIC_COLORS.drawdown,
-  },
-  audited: {
-    label: "Audited Performance",
-    color: METRIC_COLORS.audited,
-  },
 };
 
 /**
