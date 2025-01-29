@@ -27,6 +27,10 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // First, trigger the audit processing
+        await fetch('/api/audit');
+
+        // Then load trade data which will include the processed audited trades
         const data = await loadTradeData(
           algorithms,
           startDate ? startDate.toISOString() : ''

@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { Algorithm } from '@/components/AlgorithmSelector';
+import { prisma } from '@/lib/prisma';
+import type { AuditedTrade } from '.prisma/client';
 
 const CAPITAL_REQUIREMENTS = {
   'nq_trades.csv': 100000,  // Atlas NQ: $100k per unit
@@ -199,10 +201,34 @@ export async function GET(request: Request) {
       }
     };
 
+    // Fetch audited trades for the selected algorithms
+    const auditedTrades = await Promise.all(
+      algorithms.map(async (algo) => {
+        const algorithm = algo.dataset.replace('.csv', '');
+        const trades = await prisma.auditedTrade.findMany({
+          where: {
+            algorithm,
+            date: startDate ? { gte: new Date(startDate) } : undefined
+          },
+          orderBy: { date: 'asc' }
+        });
+        return trades.map((trade: AuditedTrade) => ({
+          date: trade.date.toISOString(),
+          equity: trade.price * trade.contracts
+        }));
+      })
+    );
+
+    // Flatten and sort audited trades
+    const flattenedAuditedTrades = auditedTrades
+      .flat()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
     return NextResponse.json({
       trades: combinedTrades,
       metadata,
       equityCurve: combinedEquityCurve,
+      auditedTrades: flattenedAuditedTrades,
     });
   } catch (error) {
     console.error('Error loading trade data:', error);

@@ -33,6 +33,10 @@ export interface EquityCurvePoint {
 export interface ProcessedTradeData {
   trades: Trade[];
   equityCurve: EquityCurvePoint[];
+  auditedTrades?: {
+    date: string;
+    equity: number;
+  }[];
   metadata: {
     totalTrades: number;
     winRate: number;
