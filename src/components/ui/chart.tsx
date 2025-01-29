@@ -8,19 +8,16 @@ export interface ChartConfig {
   }
 }
 
-interface ChartContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode
+interface ChartContainerProps {
+  children: React.ReactElement
   config: ChartConfig
 }
 
 export function ChartContainer({
   children,
-  config,
-  className,
-  ...props
 }: ChartContainerProps) {
   return (
-    <div className="h-full w-full" {...props}>
+    <div className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>

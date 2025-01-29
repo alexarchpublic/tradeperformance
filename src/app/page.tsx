@@ -19,7 +19,6 @@ export default function Home() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["equity"]);
   const [hoveredTradeIndex, setHoveredTradeIndex] = useState<number | null>(null);
   const [showAuditedTrades, setShowAuditedTrades] = useState(false);
-  const [auditFile, setAuditFile] = useState<File | null>(null);
 
   const handleAlgorithmsChange = (newAlgorithms: Algorithm[]) => {
     setAlgorithms(newAlgorithms);
@@ -48,8 +47,6 @@ export default function Home() {
   const handleAuditFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    setAuditFile(file);
 
     const formData = new FormData();
     formData.append('file', file);

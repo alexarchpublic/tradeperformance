@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createWorker } from 'tesseract.js';
 import { prisma } from '@/lib/prisma';
 import { parseAuditedTradeData } from '@/lib/utils/audit-parser';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
@@ -38,9 +39,9 @@ export async function POST(request: Request) {
           return await prisma.auditedTrade.create({
             data: trade,
           });
-        } catch (error: any) {
+        } catch (error) {
           // If trade already exists (unique constraint violation), skip it
-          if (error.code === 'P2002') {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             return null;
           }
           throw error;
