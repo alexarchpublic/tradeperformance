@@ -48,39 +48,6 @@ export default function Home() {
     setStartDate(undefined);
   };
 
-  const handleAuditFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('algorithm', algorithms[0].dataset.replace('.csv', ''));
-
-    try {
-      const response = await fetch('/api/audit', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upload audit file');
-      }
-
-      const result = await response.json();
-      console.log('Audit upload result:', result);
-
-      // Refresh trade data to include new audited trades
-      const data = await loadTradeData(
-        algorithms,
-        startDate ? startDate.toISOString() : ''
-      );
-      setChartData(data);
-    } catch (error) {
-      console.error('Error uploading audit file:', error);
-      // TODO: Show error message to user
-    }
-  };
-
   return (
     <main className="container mx-auto p-4 space-y-4">
       <div className="text-center mb-8">
@@ -127,21 +94,6 @@ export default function Home() {
           <Button variant="outline" onClick={handleResetDate} className="w-full md:w-auto">
             Reset Date
           </Button>
-        </div>
-      </div>
-
-      {/* Audit File Upload */}
-      <div className="flex items-center gap-4 px-4">
-        <div className="flex-grow">
-          <label className="block text-sm font-medium text-gray-500 mb-2">
-            Upload Audit Report
-          </label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleAuditFileUpload}
-            className="w-full"
-          />
         </div>
       </div>
 
