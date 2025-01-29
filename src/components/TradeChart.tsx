@@ -14,13 +14,6 @@ import { format } from "date-fns";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { type EquityCurvePoint } from "@/lib/utils/trade-data";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 interface TradeChartProps {
   data: {
@@ -238,243 +231,241 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Performance Chart</CardTitle>
-        <CardDescription>
-          Track your trading performance over time with multiple metrics
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[600px] flex flex-col">
-          {/* Main chart container */}
-          <div 
-            ref={mainChartRef}
-            className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}
-          >
+    <div className="w-full h-[600px] bg-white p-4 rounded-lg shadow">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold">Performance Chart</h2>
+        <p className="text-gray-600">Track your trading performance over time with multiple metrics</p>
+      </div>
+      <div className="h-[calc(100%-6rem)] flex flex-col">
+        {/* Main chart container */}
+        <div 
+          ref={mainChartRef}
+          className={`flex-1 ${showPnLSubgraph ? 'h-[70%]' : 'h-[90%]'} mb-2`}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={visibleData}
+              margin={getChartMargins(isDrawdownSelected, false)}
+              syncId="trading-charts"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => {
+                  const formatted = format(new Date(date), window?.innerWidth < 768 ? "MMM d" : "MMM d, yyyy");
+                  return formatted;
+                }}
+                tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                stroke="#333333"
+                padding={{ left: 20, right: 20 }}
+                hide={showPnLSubgraph}
+              />
+              <YAxis
+                yAxisId="dollar"
+                orientation="left"
+                domain={dollarDomain}
+                tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                stroke="#333333"
+                tickFormatter={(value) => {
+                  const formatted = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }).format(value);
+                  return window?.innerWidth < 768 ? formatted.replace('$', '') : formatted;
+                }}
+                label={{
+                  value: onlyPnl ? "P&L ($)" : "Value ($)",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: window?.innerWidth < 768 ? -35 : -50,
+                  style: { fill: "#333333", textAnchor: "middle", fontSize: window?.innerWidth < 768 ? 10 : 12 },
+                }}
+              />
+              {showPnLSubgraph && (
+                <YAxis
+                  yAxisId="pnlHidden"
+                  domain={["auto", "auto"]}
+                  hide={true}
+                />
+              )}
+              {isDrawdownSelected && (
+                <YAxis
+                  yAxisId="drawdown"
+                  orientation="right"
+                  domain={drawdownDomain}
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => `${value.toFixed(1)}%`}
+                  width={90}
+                  label={{
+                    value: "Peak to Peak Drawdown (%)",
+                    angle: 90,
+                    position: "insideRight",
+                    offset: -40,
+                    style: { textAnchor: "middle", fontSize: 12 },
+                  }}
+                />
+              )}
+
+              <Tooltip content={<CustomMainTooltip />} />
+
+              {isEquitySelected && (
+                <Line
+                  type="stepAfter"
+                  dataKey="equity"
+                  name="Account Value"
+                  stroke={METRIC_COLORS.equity}
+                  yAxisId="dollar"
+                  dot={false}
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                />
+              )}
+
+              {/* Invisible PnL line for tooltip data */}
+              {showPnLSubgraph && (
+                <Line
+                  type="stepAfter"
+                  dataKey="pnl"
+                  name="P&L"
+                  stroke="transparent"
+                  yAxisId="dollar"
+                  dot={false}
+                  strokeWidth={0}
+                  isAnimationActive={false}
+                  style={{ display: 'none' }}
+                />
+              )}
+
+              {onlyPnl && (
+                <Line
+                  type="stepAfter"
+                  dataKey="pnl"
+                  name="P&L"
+                  stroke={METRIC_COLORS.pnl}
+                  yAxisId="dollar"
+                  dot={false}
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                />
+              )}
+
+              {isDrawdownSelected && (
+                <Line
+                  type="linear"
+                  dataKey="drawdown"
+                  name="Peak to Peak Drawdown"
+                  stroke={METRIC_COLORS.drawdown}
+                  yAxisId="drawdown"
+                  dot={false}
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                />
+              )}
+
+              {showAuditedTrades && data.auditedTrades && data.auditedTrades.length > 0 && (
+                <Line
+                  type="stepAfter"
+                  data={data.auditedTrades}
+                  dataKey="equity"
+                  name="Audited Performance"
+                  stroke={METRIC_COLORS.audited}
+                  yAxisId="dollar"
+                  dot={false}
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  isAnimationActive={false}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* PnL Subgraph */}
+        {showPnLSubgraph && (
+          <div className="h-[25%] mb-2">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
+                className="pnl-subgraph"
                 data={visibleData}
-                margin={getChartMargins(isDrawdownSelected, false)}
+                margin={getChartMargins(isDrawdownSelected, true)}
                 syncId="trading-charts"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(date) => {
-                    const formatted = format(new Date(date), window?.innerWidth < 768 ? "MMM d" : "MMM d, yyyy");
-                    return formatted;
-                  }}
-                  tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                  tick={{ fill: "#333333", fontSize: 12 }}
                   stroke="#333333"
                   padding={{ left: 20, right: 20 }}
-                  hide={showPnLSubgraph}
                 />
                 <YAxis
-                  yAxisId="dollar"
+                  yAxisId="pnl"
                   orientation="left"
-                  domain={dollarDomain}
-                  tick={{ fill: "#333333", fontSize: window?.innerWidth < 768 ? 10 : 12 }}
+                  domain={pnlDomain}
+                  tick={{ fill: "#333333", fontSize: 12 }}
                   stroke="#333333"
-                  tickFormatter={(value) => {
-                    const formatted = new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(value);
-                    return window?.innerWidth < 768 ? formatted.replace('$', '') : formatted;
-                  }}
+                  tickFormatter={(value) => new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }).format(value)}
                   label={{
-                    value: onlyPnl ? "P&L ($)" : "Value ($)",
+                    value: "Trade P&L ($)",
                     angle: -90,
                     position: "insideLeft",
-                    offset: window?.innerWidth < 768 ? -35 : -50,
-                    style: { fill: "#333333", textAnchor: "middle", fontSize: window?.innerWidth < 768 ? 10 : 12 },
+                    offset: -50,
+                    style: { fill: "#333333", textAnchor: "middle", fontSize: 12 },
                   }}
                 />
-                {showPnLSubgraph && (
-                  <YAxis
-                    yAxisId="pnlHidden"
-                    domain={["auto", "auto"]}
-                    hide={true}
-                  />
-                )}
+                <ReferenceLine
+                  y={0}
+                  yAxisId="pnl"
+                  stroke="#666666"
+                  strokeDasharray="3 3"
+                  opacity={0.5}
+                />
                 {isDrawdownSelected && (
                   <YAxis
-                    yAxisId="drawdown"
+                    yAxisId="spacer"
                     orientation="right"
-                    domain={drawdownDomain}
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => `${value.toFixed(1)}%`}
+                    domain={[0, 1]}
+                    hide={true}
                     width={90}
-                    label={{
-                      value: "Peak to Peak Drawdown (%)",
-                      angle: 90,
-                      position: "insideRight",
-                      offset: -40,
-                      style: { textAnchor: "middle", fontSize: 12 },
-                    }}
                   />
                 )}
-
-                <Tooltip content={<CustomMainTooltip />} />
-
-                {isEquitySelected && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="equity"
-                    name="Account Value"
-                    stroke={METRIC_COLORS.equity}
-                    yAxisId="dollar"
-                    dot={false}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
-
-                {/* Invisible PnL line for tooltip data */}
-                {showPnLSubgraph && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="pnl"
-                    name="P&L"
-                    stroke="transparent"
-                    yAxisId="dollar"
-                    dot={false}
-                    strokeWidth={0}
-                    isAnimationActive={false}
-                    style={{ display: 'none' }}
-                  />
-                )}
-
-                {onlyPnl && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="pnl"
-                    name="P&L"
-                    stroke={METRIC_COLORS.pnl}
-                    yAxisId="dollar"
-                    dot={false}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
-
-                {isDrawdownSelected && (
-                  <Line
-                    type="linear"
-                    dataKey="drawdown"
-                    name="Peak to Peak Drawdown"
-                    stroke={METRIC_COLORS.drawdown}
-                    yAxisId="drawdown"
-                    dot={false}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                )}
-
-                {showAuditedTrades && data.auditedTrades && data.auditedTrades.length > 0 && (
-                  <Line
-                    type="stepAfter"
-                    data={data.auditedTrades}
-                    dataKey="equity"
-                    name="Audited Performance"
-                    stroke={METRIC_COLORS.audited}
-                    yAxisId="dollar"
-                    dot={false}
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    isAnimationActive={false}
-                  />
-                )}
+                <Tooltip
+                  content={() => null}  // No tooltip content, just the vertical line
+                  cursor={{ stroke: '#666666', strokeWidth: 1 }}
+                />
+                <Line
+                  type="stepAfter"
+                  dataKey="pnl"
+                  name="P&L"
+                  stroke={METRIC_COLORS.pnl}
+                  yAxisId="pnl"
+                  dot={false}
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
+        )}
 
-          {/* PnL Subgraph */}
-          {showPnLSubgraph && (
-            <div className="h-[25%] mb-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  className="pnl-subgraph"
-                  data={visibleData}
-                  margin={getChartMargins(isDrawdownSelected, true)}
-                  syncId="trading-charts"
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
-                    tick={{ fontSize: 12 }}
-                    padding={{ left: 20, right: 20 }}
-                  />
-                  <YAxis
-                    yAxisId="pnl"
-                    orientation="left"
-                    domain={pnlDomain}
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(value)}
-                    label={{
-                      value: "Trade P&L ($)",
-                      angle: -90,
-                      position: "insideLeft",
-                      offset: -50,
-                      style: { textAnchor: "middle", fontSize: 12 },
-                    }}
-                  />
-                  <ReferenceLine
-                    y={0}
-                    yAxisId="pnl"
-                    stroke="#666"
-                    strokeDasharray="3 3"
-                    opacity={0.5}
-                  />
-                  {isDrawdownSelected && (
-                    <YAxis
-                      yAxisId="spacer"
-                      orientation="right"
-                      domain={[0, 1]}
-                      hide={true}
-                      width={90}
-                    />
-                  )}
-                  <Tooltip
-                    content={() => null}  // No tooltip content, just the vertical line
-                    cursor={{ stroke: '#666', strokeWidth: 1 }}
-                  />
-                  <Line
-                    type="stepAfter"
-                    dataKey="pnl"
-                    name="P&L"
-                    stroke={METRIC_COLORS.pnl}
-                    yAxisId="pnl"
-                    dot={false}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Range Slider */}
-          <div className="h-[5%]">
-            <RangeSlider
-              value={rangeValues}
-              onChange={setRangeValues}
-              min={0}
-              max={data.equityCurve.length - 1}
-              step={1}
-            />
-          </div>
+        {/* Range Slider */}
+        <div className="h-[5%]">
+          <RangeSlider
+            value={rangeValues}
+            onChange={setRangeValues}
+            min={0}
+            max={data.equityCurve.length - 1}
+            step={1}
+          />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
