@@ -72,8 +72,8 @@ export async function GET() {
           })
         );
 
-        // Filter out null values (skipped duplicates)
-        const newTrades = savedTrades.filter(Boolean);
+        // Filter out null values (skipped duplicates) with type assertion
+        const newTrades = savedTrades.filter((trade): trade is AuditedTrade => trade !== null);
         allNewTrades = [...allNewTrades, ...newTrades];
       } catch (error) {
         console.error(`Error processing file ${file}:`, error);
