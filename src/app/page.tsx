@@ -66,7 +66,7 @@ export default function Home() {
           then optionally set a start date to filter the data.
         </p>
         <p className="text-sm text-amber-600 max-w-3xl mx-auto mt-2 px-4">
-          <strong>Important Note:</strong> The performance tool will not mirror your account performance. The data displayed represents only the current version of the algorithms. We periodically update algorithms in order to optimize performance.
+          <strong>Important Note:</strong> The performance tool will not mirror your account performance. The data displayed represents only the current version of the algorithms. We periodically update algorithms to optimize performance. Past performance, whether backtested or live, does not guarantee future results. Market conditions, algorithm updates, and other factors may impact future performance, which can differ from historical data. Please see the full disclosures and disclaimers in the user agreement for more details.
         </p>
       </div>
 
