@@ -310,7 +310,7 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                   yAxisId="drawdown"
                 />
               )}
-              {showAuditedTrades && data.auditedTrades && (
+              {showAuditedTrades && data.auditedTrades && data.auditedTrades.length > 0 && (
                 <Line
                   type="monotone"
                   data={data.auditedTrades}
@@ -319,6 +319,8 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
                   stroke={METRIC_COLORS.audited}
                   dot={true}
                   yAxisId="dollar"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
                 />
               )}
             </LineChart>

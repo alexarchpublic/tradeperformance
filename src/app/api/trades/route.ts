@@ -205,6 +205,9 @@ export async function GET(request: Request) {
     const auditedTrades = await Promise.all(
       algorithms.map(async (algo) => {
         const algorithm = algo.dataset.replace('.csv', '');
+        const baseCapital = CAPITAL_REQUIREMENTS[algo.dataset as keyof typeof CAPITAL_REQUIREMENTS] || 0;
+        const algoCapital = baseCapital * algo.units;
+
         const trades = await prisma.auditedTrade.findMany({
           where: {
             algorithm,
@@ -212,10 +215,18 @@ export async function GET(request: Request) {
           },
           orderBy: { date: 'asc' }
         });
-        return trades.map((trade: AuditedTrade) => ({
-          date: trade.date.toISOString(),
-          equity: trade.price * trade.contracts
-        }));
+
+        // Calculate cumulative equity starting from initial capital
+        let currentEquity = algoCapital;
+        return trades.map((trade: AuditedTrade) => {
+          if (trade.profit) {
+            currentEquity += trade.profit;
+          }
+          return {
+            date: trade.date.toISOString(),
+            equity: currentEquity
+          };
+        });
       })
     );
 

@@ -68,7 +68,7 @@ export function MetricsSelector({
       </div>
 
       {onAuditedTradesChange && (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 ml-4 border-l pl-4">
           <Checkbox
             id="audited"
             checked={showAuditedTrades}
