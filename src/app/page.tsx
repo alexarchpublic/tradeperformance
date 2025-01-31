@@ -10,7 +10,6 @@ import { MetricsSelector } from "@/components/MetricsSelector";
 import { TradeChart } from "@/components/TradeChart";
 import { TradeList } from "@/components/TradeList";
 import Image from "next/image";
-import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const [chartData, setChartData] = useState<ProcessedTradeData | null>(null);
