@@ -232,7 +232,7 @@ export function TradeChart({ data, selectedMetrics, showAuditedTrades = false }:
 
   return (
     <div className="w-full h-[600px]">
-      <div className="h-[calc(100%-6rem)] flex flex-col">
+      <div className="h-[calc(100% - 6rem)] flex flex-col">
         {/* Main chart container */}
         <div 
           ref={mainChartRef}
