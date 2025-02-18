@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { Plus, X } from "lucide-react";
 
 export interface Algorithm {
@@ -10,6 +9,7 @@ export interface Algorithm {
 
 interface AlgorithmSelectorProps {
   onAlgorithmsChange: (algorithms: Algorithm[]) => void;
+  algorithms: Algorithm[];
 }
 
 const CAPITAL_REQUIREMENTS = {
@@ -19,18 +19,14 @@ const CAPITAL_REQUIREMENTS = {
   'mes_trades.csv': 10000,  // Gateway MES: $10k per unit
 };
 
-export function AlgorithmSelector({ onAlgorithmsChange }: AlgorithmSelectorProps) {
-  const [algorithms, setAlgorithms] = useState<Algorithm[]>([{ dataset: 'nq_trades.csv', units: 1 }]);
-
+export function AlgorithmSelector({ onAlgorithmsChange, algorithms }: AlgorithmSelectorProps) {
   const handleAddAlgorithm = () => {
     const newAlgorithms = [...algorithms, { dataset: 'nq_trades.csv', units: 1 }];
-    setAlgorithms(newAlgorithms);
     onAlgorithmsChange(newAlgorithms);
   };
 
   const handleRemoveAlgorithm = (index: number) => {
     const newAlgorithms = algorithms.filter((_, i) => i !== index);
-    setAlgorithms(newAlgorithms);
     onAlgorithmsChange(newAlgorithms);
   };
 
@@ -41,7 +37,6 @@ export function AlgorithmSelector({ onAlgorithmsChange }: AlgorithmSelectorProps
       }
       return algo;
     });
-    setAlgorithms(newAlgorithms);
     onAlgorithmsChange(newAlgorithms);
   };
 
@@ -52,7 +47,6 @@ export function AlgorithmSelector({ onAlgorithmsChange }: AlgorithmSelectorProps
       }
       return algo;
     });
-    setAlgorithms(newAlgorithms);
     onAlgorithmsChange(newAlgorithms);
   };
 

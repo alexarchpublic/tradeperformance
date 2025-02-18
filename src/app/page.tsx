@@ -72,7 +72,10 @@ export default function Home() {
 
       <div className="flex flex-col md:flex-row gap-4 px-4">
         <div className="flex-grow">
-          <AlgorithmSelector onAlgorithmsChange={handleAlgorithmsChange} />
+          <AlgorithmSelector 
+            onAlgorithmsChange={handleAlgorithmsChange} 
+            algorithms={algorithms}
+          />
         </div>
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
           <div className="w-full md:w-auto">
