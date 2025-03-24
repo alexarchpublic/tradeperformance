@@ -87,9 +87,12 @@ export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListPr
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-500">
-                        {trade.algorithm.replace('_trades.csv', '').split('_').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}
+                        {trade.algorithm.replace('_trades.csv', '').split('_').map(word => {
+                          if (['es', 'mes', 'nq', 'mnq'].includes(word.toLowerCase())) {
+                            return word.toUpperCase();
+                          }
+                          return word.charAt(0).toUpperCase() + word.slice(1);
+                        }).join(' ')}
                       </span>
                     </div>
                   </div>
