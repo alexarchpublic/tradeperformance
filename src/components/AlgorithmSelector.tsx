@@ -68,16 +68,16 @@ export function AlgorithmSelector({ onAlgorithmsChange, algorithms }: AlgorithmS
               <SelectValue placeholder="Select dataset" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="atlas_es_slow.csv">Atlas ES Slow</SelectItem>
-              <SelectItem value="atlas_es_fast.csv">Atlas ES Fast</SelectItem>
-              <SelectItem value="atlas_mes_slow.csv">Atlas MES Slow</SelectItem>
-              <SelectItem value="atlas_mes_fast.csv">Atlas MES Fast</SelectItem>
-              <SelectItem value="atlas_nq_slow.csv">Atlas NQ Slow</SelectItem>
-              <SelectItem value="atlas_nq_fast.csv">Atlas NQ Fast</SelectItem>
-              <SelectItem value="atlas_mnq_slow.csv">Atlas MNQ Slow</SelectItem>
-              <SelectItem value="atlas_mnq_fast.csv">Atlas MNQ Fast</SelectItem>
-              <SelectItem value="gateway_es.csv">Gateway ES</SelectItem>
-              <SelectItem value="gateway_mes.csv">Gateway MES</SelectItem>
+              <SelectItem value="atlas_es_slow_trades.csv">Atlas ES Slow</SelectItem>
+              <SelectItem value="atlas_es_fast_trades.csv">Atlas ES Fast</SelectItem>
+              <SelectItem value="atlas_mes_slow_trades.csv">Atlas MES Slow</SelectItem>
+              <SelectItem value="atlas_mes_fast_trades.csv">Atlas MES Fast</SelectItem>
+              <SelectItem value="atlas_nq_slow_trades.csv">Atlas NQ Slow</SelectItem>
+              <SelectItem value="atlas_nq_fast_trades.csv">Atlas NQ Fast</SelectItem>
+              <SelectItem value="atlas_mnq_slow_trades.csv">Atlas MNQ Slow</SelectItem>
+              <SelectItem value="atlas_mnq_fast_trades.csv">Atlas MNQ Fast</SelectItem>
+              <SelectItem value="es_trades.csv">Gateway ES</SelectItem>
+              <SelectItem value="mes_trades.csv">Gateway MES</SelectItem>
             </SelectContent>
           </Select>
 
