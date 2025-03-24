@@ -13,15 +13,21 @@ interface AlgorithmSelectorProps {
 }
 
 const CAPITAL_REQUIREMENTS = {
-  'nq_trades.csv': 100000,  // Atlas NQ: $100k per unit
-  'mnq_trades.csv': 25000,  // Atlas MNQ: $25k per unit
-  'es_trades.csv': 100000,  // Gateway ES: $100k per unit
-  'mes_trades.csv': 10000,  // Gateway MES: $10k per unit
+  'atlas_es_slow.csv': 75000,   // Atlas ES Slow: $75k per unit
+  'atlas_es_fast.csv': 75000,   // Atlas ES Fast: $75k per unit
+  'atlas_mes_slow.csv': 7500,   // Atlas MES Slow: $7.5k per unit
+  'atlas_mes_fast.csv': 7500,   // Atlas MES Fast: $7.5k per unit
+  'atlas_nq_slow.csv': 75000,   // Atlas NQ Slow: $75k per unit
+  'atlas_nq_fast.csv': 75000,   // Atlas NQ Fast: $75k per unit
+  'atlas_mnq_slow.csv': 7500,   // Atlas MNQ Slow: $7.5k per unit
+  'atlas_mnq_fast.csv': 7500,   // Atlas MNQ Fast: $7.5k per unit
+  'gateway_es.csv': 100000,     // Gateway ES: $100k per unit
+  'gateway_mes.csv': 10000,     // Gateway MES: $10k per unit
 };
 
 export function AlgorithmSelector({ onAlgorithmsChange, algorithms }: AlgorithmSelectorProps) {
   const handleAddAlgorithm = () => {
-    const newAlgorithms = [...algorithms, { dataset: 'nq_trades.csv', units: 1 }];
+    const newAlgorithms = [...algorithms, { dataset: 'atlas_es_slow.csv', units: 1 }];
     onAlgorithmsChange(newAlgorithms);
   };
 
@@ -62,10 +68,16 @@ export function AlgorithmSelector({ onAlgorithmsChange, algorithms }: AlgorithmS
               <SelectValue placeholder="Select dataset" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="nq_trades.csv">Atlas NQ</SelectItem>
-              <SelectItem value="mnq_trades.csv">Atlas MNQ</SelectItem>
-              <SelectItem value="es_trades.csv">Gateway ES</SelectItem>
-              <SelectItem value="mes_trades.csv">Gateway MES</SelectItem>
+              <SelectItem value="atlas_es_slow.csv">Atlas ES Slow</SelectItem>
+              <SelectItem value="atlas_es_fast.csv">Atlas ES Fast</SelectItem>
+              <SelectItem value="atlas_mes_slow.csv">Atlas MES Slow</SelectItem>
+              <SelectItem value="atlas_mes_fast.csv">Atlas MES Fast</SelectItem>
+              <SelectItem value="atlas_nq_slow.csv">Atlas NQ Slow</SelectItem>
+              <SelectItem value="atlas_nq_fast.csv">Atlas NQ Fast</SelectItem>
+              <SelectItem value="atlas_mnq_slow.csv">Atlas MNQ Slow</SelectItem>
+              <SelectItem value="atlas_mnq_fast.csv">Atlas MNQ Fast</SelectItem>
+              <SelectItem value="gateway_es.csv">Gateway ES</SelectItem>
+              <SelectItem value="gateway_mes.csv">Gateway MES</SelectItem>
             </SelectContent>
           </Select>
 
