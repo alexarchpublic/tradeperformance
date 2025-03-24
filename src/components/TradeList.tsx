@@ -91,7 +91,16 @@ export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListPr
                 onMouseLeave={() => handleTradeHover(null)}
               >
                 <TableCell>
-                  {ALGORITHM_NAMES[trade.algorithm as keyof typeof ALGORITHM_NAMES]}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">
+                        {trade.algorithm.replace('_trades.csv', '').split('_').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')}
+                      </span>
+                      <span className="text-sm text-gray-500">× {trade.units}</span>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
                   {trade.units} {trade.units === 1 ? 'unit' : 'units'}
