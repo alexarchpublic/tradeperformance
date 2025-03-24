@@ -4,10 +4,16 @@ import { NextResponse } from 'next/server';
 import { Algorithm } from '@/components/AlgorithmSelector';
 
 const CAPITAL_REQUIREMENTS = {
-  'nq_trades.csv': 100000,  // Atlas NQ: $100k per unit
-  'mnq_trades.csv': 25000,  // Atlas MNQ: $25k per unit
-  'es_trades.csv': 100000,  // Gateway ES: $100k per unit
-  'mes_trades.csv': 10000,  // Gateway MES: $10k per unit
+  'atlas_es_slow.csv': 75000,   // Atlas ES Slow: $75k per unit
+  'atlas_es_fast.csv': 75000,   // Atlas ES Fast: $75k per unit
+  'atlas_mes_slow.csv': 7500,   // Atlas MES Slow: $7.5k per unit
+  'atlas_mes_fast.csv': 7500,   // Atlas MES Fast: $7.5k per unit
+  'atlas_nq_slow.csv': 75000,   // Atlas NQ Slow: $75k per unit
+  'atlas_nq_fast.csv': 75000,   // Atlas NQ Fast: $75k per unit
+  'atlas_mnq_slow.csv': 7500,   // Atlas MNQ Slow: $7.5k per unit
+  'atlas_mnq_fast.csv': 7500,   // Atlas MNQ Fast: $7.5k per unit
+  'gateway_es.csv': 100000,     // Gateway ES: $100k per unit
+  'gateway_mes.csv': 10000,     // Gateway MES: $10k per unit
 };
 
 interface TradeData {

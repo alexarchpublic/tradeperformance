@@ -14,7 +14,7 @@ import Image from "next/image";
 export default function Home() {
   const [chartData, setChartData] = useState<ProcessedTradeData | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>();
-  const [algorithms, setAlgorithms] = useState<Algorithm[]>([{ dataset: 'nq_trades.csv', units: 1 }]);
+  const [algorithms, setAlgorithms] = useState<Algorithm[]>([{ dataset: 'atlas_es_slow.csv', units: 1 }]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["equity"]);
   const [hoveredTradeIndex, setHoveredTradeIndex] = useState<number | null>(null);
 
