@@ -34,13 +34,6 @@ const formatPercent = (value: number) => {
   return `${value.toFixed(2)}%`;
 };
 
-const ALGORITHM_NAMES = {
-  'nq_trades.csv': 'Atlas NQ',
-  'mnq_trades.csv': 'Atlas MNQ',
-  'es_trades.csv': 'Gateway ES',
-  'mes_trades.csv': 'Gateway MES',
-};
-
 export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListProps) {
   if (!data?.trades?.length) return null;
 
