@@ -91,7 +91,6 @@ export function TradeList({ data, onTradeHover, hoveredTradeIndex }: TradeListPr
                           word.charAt(0).toUpperCase() + word.slice(1)
                         ).join(' ')}
                       </span>
-                      <span className="text-sm text-gray-500">× {trade.units}</span>
                     </div>
                   </div>
                 </TableCell>
