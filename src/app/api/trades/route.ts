@@ -135,7 +135,6 @@ export async function GET(request: Request) {
     let peakEquity = totalInitialCapital;
     let maxDrawdownPercent = 0;
     let maxDrawdownDollars = 0;
-    let currentDrawdownDollars = 0;
     let currentPeakEquity = totalInitialCapital;
 
     // First pass: Calculate equity curve and track close-to-close drawdown
