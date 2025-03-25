@@ -135,13 +135,17 @@ export async function GET(request: Request) {
     let peakEquity = totalInitialCapital;
     let maxDrawdownPercent = 0;
     let maxDrawdownDollars = 0;
+    let currentDrawdownDollars = 0;
+    let currentPeakEquity = totalInitialCapital;
+
+    // First pass: Calculate equity curve and track close-to-close drawdown
     combinedEquityCurve = combinedTrades.map(trade => {
       equity += trade.PnL;
       peakEquity = Math.max(peakEquity, equity);
       const drawdownPercent = equity < peakEquity ? ((peakEquity - equity) / peakEquity) * 100 : 0;
       const drawdownDollars = equity < peakEquity ? peakEquity - equity : 0;
-      maxDrawdownPercent = Math.max(maxDrawdownPercent, drawdownPercent);
       maxDrawdownDollars = Math.max(maxDrawdownDollars, drawdownDollars);
+      maxDrawdownPercent = Math.max(maxDrawdownPercent, drawdownPercent);
       return {
         date: new Date(trade.Exit_Date).toISOString(),
         equity,
@@ -149,6 +153,60 @@ export async function GET(request: Request) {
         drawdown: -drawdownPercent
       };
     });
+
+    // Second pass: Consider intraday drawdowns using Max_Adverse_Excursion
+    // Create a timeline of all trade events
+    interface TradeEvent {
+      type: 'entry' | 'exit';
+      trade: TradeData;
+      date: Date;
+    }
+
+    const events: TradeEvent[] = [];
+    combinedTrades.forEach(trade => {
+      events.push({
+        type: 'entry',
+        trade,
+        date: new Date(trade.Entry_Date)
+      });
+      events.push({
+        type: 'exit',
+        trade,
+        date: new Date(trade.Exit_Date)
+      });
+    });
+
+    // Sort events chronologically
+    events.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Process events in sequence
+    equity = totalInitialCapital;
+    const activeTrades = new Set<TradeData>();
+    
+    for (const event of events) {
+      if (event.type === 'entry') {
+        activeTrades.add(event.trade);
+      } else {
+        activeTrades.delete(event.trade);
+        equity += event.trade.PnL;
+        currentPeakEquity = Math.max(currentPeakEquity, equity);
+      }
+
+      // Calculate combined adverse excursion for all active trades
+      let worstCaseDrawdown = 0;
+      activeTrades.forEach(trade => {
+        worstCaseDrawdown += trade.Max_Adverse_Excursion;
+      });
+
+      // Calculate potential equity at worst point
+      const potentialEquity = equity + worstCaseDrawdown;
+      const drawdownDollars = currentPeakEquity - potentialEquity;
+      
+      if (drawdownDollars > maxDrawdownDollars) {
+        maxDrawdownDollars = drawdownDollars;
+        maxDrawdownPercent = (drawdownDollars / currentPeakEquity) * 100;
+      }
+    }
 
     // Calculate weighted PnL percentage
     const pnlPercent = (totalPnL / totalInitialCapital) * 100;
